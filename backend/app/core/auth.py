@@ -6,7 +6,6 @@ for financial ledger operations.
 """
 
 from typing import List, Optional
-from datetime import datetime, timedelta
 from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -63,20 +62,23 @@ def get_current_user(
     """
     # 1. Check custom test role header
     if x_user_role:
-        if x_user_role == UserRole.AUDITOR:
+        r_str = x_user_role.lower()
+        if "audit" in r_str:
             return PRECONFIGURED_USERS["senior_auditor"]
-        elif x_user_role == UserRole.OPERATOR:
+        elif "operat" in r_str or "ops" in r_str:
             return PRECONFIGURED_USERS["ops_associate"]
-        return PRECONFIGURED_USERS["lead_controller"]
+        elif "control" in r_str:
+            return PRECONFIGURED_USERS["lead_controller"]
 
     # 2. Check Bearer token
-    if credentials:
-        token = credentials.credentials
-        if token == "token_auditor":
+    if credentials and credentials.credentials:
+        token = credentials.credentials.lower()
+        if "audit" in token:
             return PRECONFIGURED_USERS["senior_auditor"]
-        elif token == "token_operator":
+        elif "operat" in token or "ops" in token:
             return PRECONFIGURED_USERS["ops_associate"]
-        return PRECONFIGURED_USERS["lead_controller"]
+        elif "control" in token:
+            return PRECONFIGURED_USERS["lead_controller"]
 
     # Default to Lead Controller for seamless testing
     return PRECONFIGURED_USERS["lead_controller"]

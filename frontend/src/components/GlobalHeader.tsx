@@ -24,6 +24,33 @@ interface GlobalHeaderProps {
   onSelectUser?: (user: AuthUser) => void;
 }
 
+const DEFAULT_DEMO_ACCOUNTS: AuthUser[] = [
+  {
+    user_id: "usr_ctrl_001",
+    name: "Arjun Mehta",
+    email: "arjun.mehta@nexusmarket.in",
+    role: "FINANCE_CONTROLLER",
+    merchant_id: "rzp_live_nexus99",
+    permissions: ["read_ledger", "investigate_ai", "approve_corrections", "run_reconciliation", "inject_chaos"]
+  },
+  {
+    user_id: "usr_audit_002",
+    name: "Priya Sharma",
+    email: "priya.sharma@deloitte-audit.com",
+    role: "COMPLIANCE_AUDITOR",
+    merchant_id: "rzp_live_nexus99",
+    permissions: ["read_ledger", "view_audit_trail", "view_benchmarks", "view_cash_position"]
+  },
+  {
+    user_id: "usr_ops_003",
+    name: "Rohan Verma",
+    email: "rohan.verma@nexusmarket.in",
+    role: "SETTLEMENT_OPERATOR",
+    merchant_id: "rzp_live_nexus99",
+    permissions: ["read_ledger", "investigate_ai"]
+  }
+];
+
 export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   currentUser,
   oauthConnected,
@@ -36,8 +63,11 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const userInitials = currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('') : "AM";
-  const userRoleShort = currentUser?.role === 'FINANCE_CONTROLLER' ? 'Controller' : currentUser?.role === 'COMPLIANCE_AUDITOR' ? 'Auditor' : 'Operator';
+  const activeUser = currentUser || DEFAULT_DEMO_ACCOUNTS[0];
+  const userInitials = activeUser?.name ? activeUser.name.split(' ').map(n => n[0]).join('') : "AM";
+  const userRoleShort = activeUser?.role === 'FINANCE_CONTROLLER' ? 'Controller' : activeUser?.role === 'COMPLIANCE_AUDITOR' ? 'Auditor' : 'Operator';
+
+  const accountsToRender = (demoAccounts && demoAccounts.length > 0) ? demoAccounts : DEFAULT_DEMO_ACCOUNTS;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -213,7 +243,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
               width: '24px',
               height: '24px',
               borderRadius: '50%',
-              background: currentUser?.role === 'COMPLIANCE_AUDITOR' ? '#059669' : currentUser?.role === 'SETTLEMENT_OPERATOR' ? '#D97706' : '#0B72E7',
+              background: activeUser?.role === 'COMPLIANCE_AUDITOR' ? '#059669' : activeUser?.role === 'SETTLEMENT_OPERATOR' ? '#D97706' : '#0B72E7',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
@@ -226,7 +256,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--blade-text-primary)', lineHeight: 1.1, fontFamily: 'var(--font-heading)' }}>
-                {currentUser?.name || "Arjun Mehta"}
+                {activeUser?.name || "Arjun Mehta"}
               </span>
               <span style={{ fontSize: '0.62rem', color: '#0B72E7', fontWeight: 600 }}>
                 {userRoleShort}
@@ -241,11 +271,11 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
               position: 'absolute',
               top: '38px',
               right: 0,
-              width: '280px',
+              width: '290px',
               background: '#FFFFFF',
               border: '1px solid var(--blade-border-medium)',
               borderRadius: '10px',
-              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08)',
+              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.14), 0 8px 10px -6px rgba(15, 23, 42, 0.08)',
               padding: '8px',
               zIndex: 100,
               animation: 'fadeIn 0.12s ease-out'
@@ -260,8 +290,8 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {demoAccounts.map((acc) => {
-                  const isSelected = currentUser?.user_id === acc.user_id;
+                {accountsToRender.map((acc) => {
+                  const isSelected = activeUser?.user_id === acc.user_id;
                   const roleStyle = getRoleBadgeStyle(acc.role);
 
                   return (
