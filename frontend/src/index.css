@@ -1,0 +1,278 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Authentic Razorpay Blade 2.0 Light Theme Tokens */
+  --blade-bg-app: #F4F6F9;
+  --blade-bg-surface: #FFFFFF;
+  --blade-bg-subtle: #F8FAFC;
+  --blade-bg-hover: #F1F5F9;
+  --blade-bg-active: #E2E8F0;
+  
+  --blade-border-subtle: #E2E8F0;
+  --blade-border-medium: #CBD5E1;
+  --blade-border-strong: #94A3B8;
+  
+  --blade-text-primary: #0F172A;
+  --blade-text-secondary: #334155;
+  --blade-text-muted: #64748B;
+  --blade-text-subtle: #94A3B8;
+  
+  --blade-blue-primary: #0B72E7;
+  --blade-blue-hover: #0858B8;
+  --blade-blue-light: #EFF6FF;
+  --blade-blue-border: #BFDBFE;
+  
+  --blade-green-text: #047857;
+  --blade-green-bg: #ECFDF5;
+  --blade-green-border: #A7F3D0;
+  
+  --blade-amber-text: #B45309;
+  --blade-amber-bg: #FFFBEB;
+  --blade-amber-border: #FDE68A;
+  
+  --blade-red-text: #B91C1C;
+  --blade-red-bg: #FEF2F2;
+  --blade-red-border: #FECACA;
+  
+  --blade-purple-text: #6D28D9;
+  --blade-purple-bg: #F5F3FF;
+  --blade-purple-border: #DDD6FE;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--blade-bg-app);
+  color: var(--blade-text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+.num-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Blade Cards & Panels */
+.blade-panel {
+  background: var(--blade-bg-surface);
+  border: 1px solid var(--blade-border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.blade-card {
+  background: var(--blade-bg-surface);
+  border: 1px solid var(--blade-border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.blade-card:hover {
+  border-color: var(--blade-border-medium);
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Micro Typography */
+.micro-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--blade-text-muted);
+}
+
+/* Blade Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.badge-matched {
+  background: var(--blade-green-bg);
+  color: var(--blade-green-text);
+  border: 1px solid var(--blade-green-border);
+}
+
+.badge-resolvable {
+  background: var(--blade-amber-bg);
+  color: var(--blade-amber-text);
+  border: 1px solid var(--blade-amber-border);
+}
+
+.badge-review {
+  background: var(--blade-red-bg);
+  color: var(--blade-red-text);
+  border: 1px solid var(--blade-red-border);
+}
+
+.badge-verified {
+  background: var(--blade-blue-light);
+  color: var(--blade-blue-primary);
+  border: 1px solid var(--blade-blue-border);
+}
+
+.badge-blue {
+  background: var(--blade-blue-light);
+  color: var(--blade-blue-primary);
+  border: 1px solid var(--blade-blue-border);
+}
+
+/* Razorpay Blade Buttons */
+.btn-primary {
+  background: var(--blade-blue-primary);
+  color: #FFFFFF;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--blade-blue-hover);
+  box-shadow: 0 1px 3px rgba(11, 114, 231, 0.25);
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  color: var(--blade-text-secondary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  border: 1px solid var(--blade-border-medium);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--blade-bg-subtle);
+  color: var(--blade-text-primary);
+  border-color: var(--blade-border-strong);
+}
+
+.btn-danger {
+  background: #FEF2F2;
+  color: #B91C1C;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border: 1px solid #FECACA;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-danger:hover {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+}
+
+.btn-success {
+  background: #059669;
+  color: #FFFFFF;
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.82rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-success:hover {
+  background: #047857;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25);
+}
+
+/* Modal Overlay & Slide-over Drawer */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.drawer-slideover {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 740px;
+  max-width: 92vw;
+  background: #FFFFFF;
+  box-shadow: -4px 0 24px rgba(15, 23, 42, 0.12);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: slideLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
