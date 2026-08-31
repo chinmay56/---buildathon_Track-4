@@ -3,7 +3,6 @@ import {
   Zap, 
   Search, 
   Play, 
-  ShieldCheck, 
   RefreshCw, 
   Check, 
   ChevronDown,
@@ -13,13 +12,13 @@ import type { AuthUser } from '../types';
 
 interface GlobalHeaderProps {
   currentUser: AuthUser | null;
-  oauthConnected: boolean;
+  oauthConnected?: boolean;
   loading: boolean;
-  onRefresh: () => void;
+  onRefresh?: () => void;
   onRunBatch: () => void;
-  onOpenChaosModal: () => void;
-  onOpenAuthModal: () => void;
-  onOpenOAuthModal: () => void;
+  onOpenChaosModal?: () => void;
+  onOpenAuthModal?: () => void;
+  onOpenOAuthModal?: () => void;
   demoAccounts?: AuthUser[];
   onSelectUser?: (user: AuthUser) => void;
 }
@@ -53,10 +52,8 @@ const DEFAULT_DEMO_ACCOUNTS: AuthUser[] = [
 
 export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   currentUser,
-  oauthConnected,
   loading,
   onRunBatch,
-  onOpenOAuthModal,
   demoAccounts = [],
   onSelectUser,
 }) => {
@@ -179,32 +176,8 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
         </span>
       </div>
 
-      {/* Right: Actions, OAuth & Instant 1-Click Role Switcher */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        
-        {/* Razorpay OAuth Status Badge */}
-        <button
-          onClick={onOpenOAuthModal}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '5px 10px',
-            borderRadius: '6px',
-            background: oauthConnected ? '#ECFDF5' : '#FFFBEB',
-            border: oauthConnected ? '1px solid #A7F3D0' : '1px solid #FDE68A',
-            fontSize: '0.72rem',
-            fontFamily: 'var(--font-heading)',
-            fontWeight: 600,
-            color: oauthConnected ? '#059669' : '#D97706',
-            cursor: 'pointer',
-            transition: 'all 0.12s ease'
-          }}
-          title="Razorpay OAuth 2.0 Partner Connection"
-        >
-          <ShieldCheck size={13} color={oauthConnected ? "#059669" : "#D97706"} />
-          <span>{oauthConnected ? "OAuth Connected" : "Connect OAuth"}</span>
-        </button>
+      {/* Right: Primary Action & Instant 1-Click Role Switcher */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 
         {/* Primary Action: Reconcile Batch */}
         <button
