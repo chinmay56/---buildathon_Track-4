@@ -10,13 +10,15 @@ export const CashPositionCard: React.FC<CashProps> = ({ cash }) => {
   if (!cash) return null;
 
   return (
-    <div className="rzp-panel" style={{ padding: '16px 20px', marginBottom: '16px' }}>
+    <div className="blade-panel" style={{ padding: '18px 20px', marginBottom: '16px', background: '#FFFFFF' }}>
       
       {/* Title */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Wallet size={16} color="#0B72E7" />
-          <h2 style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+          <div style={{ padding: '5px', borderRadius: '6px', background: '#EFF6FF', color: '#0B72E7' }}>
+            <Wallet size={16} />
+          </div>
+          <h2 style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--blade-text-primary)', fontFamily: 'var(--font-heading)' }}>
             Cash Float & Settlement Liquidity Health
           </h2>
         </div>
@@ -24,7 +26,7 @@ export const CashPositionCard: React.FC<CashProps> = ({ cash }) => {
           <span className="micro-label">Exposure Risk:</span>
           <span className="badge" style={{
             background: cash.float_risk_index_pct > 5 ? '#FEF2F2' : '#ECFDF5',
-            color: cash.float_risk_index_pct > 5 ? '#B91C1C' : '#047857',
+            color: cash.float_risk_index_pct > 5 ? '#DC2626' : '#059669',
             border: cash.float_risk_index_pct > 5 ? '1px solid #FECACA' : '1px solid #A7F3D0'
           }}>
             {cash.float_risk_index_pct}% GMV Exposure
@@ -33,45 +35,45 @@ export const CashPositionCard: React.FC<CashProps> = ({ cash }) => {
       </div>
 
       {/* 4 Stat Boxes */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
         
         {/* Total GMV */}
-        <div style={{ padding: '12px 14px', background: 'var(--bg-subtle)', borderRadius: '6px', border: '1px solid var(--border-hairline)' }}>
-          <div className="micro-label" style={{ marginBottom: '2px' }}>Total Batch GMV</div>
-          <div className="num-mono" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div className="blade-card" style={{ padding: '14px', background: '#F8FAFC' }}>
+          <div className="micro-label" style={{ marginBottom: '4px' }}>Total Batch GMV</div>
+          <div className="num-mono" style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--blade-text-primary)' }}>
             ₹{cash.total_gmv_inr.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
         </div>
 
         {/* Trapped Capital */}
-        <div style={{ padding: '12px 14px', background: '#FEF2F2', borderRadius: '6px', border: '1px solid #FECACA' }}>
-          <div className="micro-label" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#B91C1C', marginBottom: '2px' }}>
-            <Lock size={11} /> Trapped Vendor Clawbacks
+        <div className="blade-card" style={{ padding: '14px', background: '#FEF2F2', borderColor: '#FECACA' }}>
+          <div className="micro-label" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#DC2626', marginBottom: '4px' }}>
+            <Lock size={12} /> Trapped Vendor Clawbacks
           </div>
-          <div className="num-mono" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#B91C1C' }}>
+          <div className="num-mono" style={{ fontSize: '1.3rem', fontWeight: 800, color: '#DC2626' }}>
             ₹{cash.unrecovered_vendor_clawbacks_inr.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
-          <div style={{ fontSize: '0.68rem', color: '#B91C1C', opacity: 0.85 }}>Pending recovery debit note</div>
+          <div style={{ fontSize: '0.7rem', color: '#DC2626', opacity: 0.85, marginTop: '2px' }}>Pending recovery debit note</div>
         </div>
 
         {/* Orphaned Payouts */}
-        <div style={{ padding: '12px 14px', background: '#FFFBEB', borderRadius: '6px', border: '1px solid #FDE68A' }}>
-          <div className="micro-label" style={{ color: '#B45309', marginBottom: '2px' }}>Orphaned Payout Exposure</div>
-          <div className="num-mono" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#B45309' }}>
+        <div className="blade-card" style={{ padding: '14px', background: '#FFFBEB', borderColor: '#FDE68A' }}>
+          <div className="micro-label" style={{ color: '#D97706', marginBottom: '4px' }}>Orphaned Payout Exposure</div>
+          <div className="num-mono" style={{ fontSize: '1.3rem', fontWeight: 800, color: '#D97706' }}>
             ₹{cash.orphaned_payout_exposure_inr.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
-          <div style={{ fontSize: '0.68rem', color: '#B45309', opacity: 0.85 }}>Unverified UTR transfers</div>
+          <div style={{ fontSize: '0.7rem', color: '#D97706', opacity: 0.85, marginTop: '2px' }}>Unverified UTR transfers</div>
         </div>
 
         {/* Safe T+2 Float */}
-        <div style={{ padding: '12px 14px', background: '#ECFDF5', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
-          <div className="micro-label" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', marginBottom: '2px' }}>
-            <ShieldCheck size={11} /> Safe Settlement Float
+        <div className="blade-card" style={{ padding: '14px', background: '#ECFDF5', borderColor: '#A7F3D0' }}>
+          <div className="micro-label" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#059669', marginBottom: '4px' }}>
+            <ShieldCheck size={12} /> Safe Settlement Float
           </div>
-          <div className="num-mono" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#047857' }}>
+          <div className="num-mono" style={{ fontSize: '1.3rem', fontWeight: 800, color: '#059669' }}>
             ₹{cash.safe_settlement_disbursement_float_inr.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
-          <div style={{ fontSize: '0.68rem', color: '#047857', opacity: 0.85 }}>Safe to disburse on T+2 rolling cycle</div>
+          <div style={{ fontSize: '0.7rem', color: '#059669', opacity: 0.85, marginTop: '2px' }}>Safe to disburse on T+2 rolling cycle</div>
         </div>
 
       </div>

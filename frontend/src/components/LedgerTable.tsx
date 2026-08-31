@@ -13,11 +13,16 @@ export const LedgerTable: React.FC<LedgerProps> = ({
   onSelectRecord,
   selectedOrderId
 }) => {
-  const [filterStatus, setFilterStatus] = useState<string>("EXCEPTIONS_ONLY");
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const pageSize = 20;
+
+  const matchedCount = records.filter(r => r.status === "MATCHED").length;
+  const exceptionCount = records.filter(r => r.status !== "MATCHED" && r.status !== "VERIFIED_RESOLVED").length;
+  const reviewCount = records.filter(r => r.status === "HUMAN_REVIEW").length;
+  const verifiedCount = records.filter(r => r.status === "VERIFIED_RESOLVED").length;
 
   const filteredRecords = records.filter(rec => {
     const matchesSearch = 
@@ -58,31 +63,83 @@ export const LedgerTable: React.FC<LedgerProps> = ({
     }
   };
 
-  // Summary figures
-  const totalGross = records.reduce((sum, r) => sum + r.gross_amount, 0);
-  const totalActual = records.reduce((sum, r) => sum + r.actual_settlement, 0);
-  const totalDelta = records.reduce((sum, r) => sum + r.net_discrepancy, 0);
-
   return (
-    <div className="rzp-panel" style={{ padding: '16px 20px' }}>
+    <div className="blade-panel" style={{ padding: '18px 20px', background: '#FFFFFF' }}>
       
       {/* Table Top Header & Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--blade-text-primary)', fontFamily: 'var(--font-heading)' }}>
             Settlement Ledger Records
           </h2>
-          <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>
-            Showing <span className="num-mono" style={{ fontWeight: 600 }}>{filteredRecords.length}</span> of <span className="num-mono">{records.length}</span> multi-source transactions
+          <p style={{ fontSize: '0.74rem', color: 'var(--blade-text-muted)', marginTop: '2px' }}>
+            Showing <span className="num-mono" style={{ fontWeight: 600, color: 'var(--blade-text-primary)' }}>{filteredRecords.length}</span> of <span className="num-mono">{records.length}</span> transactions
           </p>
         </div>
 
-        {/* Filter buttons & Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {/* Filter Segmented Buttons & Search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           
+          {/* Segmented Control Pills */}
+          <div style={{
+            display: 'flex',
+            background: 'var(--blade-bg-subtle)',
+            padding: '3px',
+            borderRadius: '8px',
+            border: '1px solid var(--blade-border-medium)',
+            gap: '2px',
+          }}>
+            {[
+              { id: "ALL", label: "All", count: records.length },
+              { id: "MATCHED", label: "Matched", count: matchedCount },
+              { id: "EXCEPTIONS_ONLY", label: "Exceptions", count: exceptionCount },
+              { id: "HUMAN_REVIEW", label: "Review", count: reviewCount },
+              { id: "VERIFIED_RESOLVED", label: "Verified", count: verifiedCount },
+            ].map((tab) => {
+              const isSelected = filterStatus === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setFilterStatus(tab.id);
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    background: isSelected ? '#FFFFFF' : 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '0.74rem',
+                    fontFamily: 'var(--font-heading)',
+                    fontWeight: isSelected ? 700 : 500,
+                    color: isSelected ? '#0B72E7' : 'var(--blade-text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    boxShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  <span>{tab.label}</span>
+                  <span style={{
+                    fontSize: '0.64rem',
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    borderRadius: '10px',
+                    background: isSelected ? '#EFF6FF' : 'var(--blade-border-medium)',
+                    color: isSelected ? '#0B72E7' : 'var(--blade-text-muted)',
+                  }}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Search Input */}
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <Search size={13} color="var(--text-muted)" style={{ position: 'absolute', left: '9px' }} />
+            <Search size={14} color="var(--blade-text-muted)" style={{ position: 'absolute', left: '10px' }} />
             <input
               type="text"
               placeholder="Search Order / Vendor..."
@@ -93,178 +150,138 @@ export const LedgerTable: React.FC<LedgerProps> = ({
               }}
               style={{
                 background: '#FFFFFF',
-                border: '1px solid var(--border-hairline)',
-                borderRadius: '6px',
-                padding: '5px 10px 5px 28px',
-                color: 'var(--text-primary)',
+                border: '1px solid var(--blade-border-medium)',
+                borderRadius: '8px',
+                padding: '6px 12px 6px 30px',
+                color: 'var(--blade-text-primary)',
                 fontSize: '0.78rem',
                 outline: 'none',
-                width: '190px'
+                width: '200px',
+                transition: 'border-color 0.15s ease',
               }}
+              onFocus={(e) => e.target.style.borderColor = '#0B72E7'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--blade-border-medium)'}
             />
           </div>
 
-          {/* Filter Pills */}
-          <div style={{ display: 'flex', background: 'var(--bg-subtle)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-hairline)' }}>
-            {[
-              { label: 'Exceptions Only', value: 'EXCEPTIONS_ONLY' },
-              { label: 'Auto-Resolvable', value: 'AUTO_RESOLVABLE' },
-              { label: 'Human Review', value: 'HUMAN_REVIEW' },
-              { label: 'Verified', value: 'VERIFIED_RESOLVED' },
-              { label: 'All', value: 'ALL' }
-            ].map(tab => (
-              <button
-                key={tab.value}
-                onClick={() => {
-                  setFilterStatus(tab.value);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  background: filterStatus === tab.value ? '#FFFFFF' : 'transparent',
-                  color: filterStatus === tab.value ? '#0B72E7' : 'var(--text-muted)',
-                  border: filterStatus === tab.value ? '1px solid var(--border-hairline)' : 'none',
-                  borderRadius: '4px',
-                  padding: '4px 9px',
-                  fontSize: '0.72rem',
-                  fontWeight: filterStatus === tab.value ? 600 : 500,
-                  cursor: 'pointer',
-                  boxShadow: filterStatus === tab.value ? '0 1px 2px rgba(0,0,0,0.04)' : 'none'
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
         </div>
       </div>
 
-      {/* Quick Summary Strip */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '8px 12px',
-        background: 'var(--bg-subtle)',
-        borderRadius: '6px',
-        border: '1px solid var(--border-hairline)',
-        marginBottom: '12px',
-        fontSize: '0.72rem',
-        flexWrap: 'wrap',
-        gap: '10px'
-      }}>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Batch Gross: </span>
-            <strong className="num-mono" style={{ color: 'var(--text-primary)' }}>₹{totalGross.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Net Disbursed: </span>
-            <strong className="num-mono" style={{ color: 'var(--text-primary)' }}>₹{totalActual.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Unresolved Exposure: </span>
-            <strong className="num-mono" style={{ color: '#B91C1C' }}>₹{totalDelta.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
-          </div>
-        </div>
-        <div style={{ color: 'var(--text-muted)' }}>
-          Showing <strong>{paginatedRecords.length}</strong> records on Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-        </div>
-      </div>
-
-      {/* Table Content */}
-      <div style={{ overflowX: 'auto', maxHeight: '480px', overflowY: 'auto', borderRadius: '6px', border: '1px solid var(--border-hairline)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.78rem' }}>
+      {/* Main Table */}
+      <div style={{ overflowX: 'auto', border: '1px solid var(--blade-border-medium)', borderRadius: '8px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', textAlign: 'left' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-hairline)', color: 'var(--text-muted)', background: 'var(--bg-subtle)', position: 'sticky', top: 0, zIndex: 10 }}>
-              <th style={{ padding: '8px 12px' }}>ORDER ID</th>
-              <th style={{ padding: '8px 12px' }}>VENDOR ID</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right' }}>GROSS AMOUNT</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right' }}>EXPECTED SHARE</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right' }}>ACTUAL SETTLED</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right' }}>NET DELTA</th>
-              <th style={{ padding: '8px 12px' }}>LEDGER STATUS</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center' }}>ACTION</th>
+            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--blade-border-medium)' }}>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em' }}>Order ID</th>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em' }}>Vendor Entity</th>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em', textAlign: 'right' }}>Gross GMV</th>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em', textAlign: 'right' }}>Expected Share</th>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em', textAlign: 'right' }}>Actual Payout</th>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em', textAlign: 'right' }}>Net Delta</th>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em' }}>Status</th>
+              <th style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--blade-text-muted)', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.05em', textAlign: 'center' }}>Action</th>
             </tr>
           </thead>
           <tbody>
             {paginatedRecords.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '28px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  No records found matching current criteria.
+                <td colSpan={8} style={{ padding: '36px', textAlign: 'center', color: 'var(--blade-text-muted)' }}>
+                  No matching transaction records found.
                 </td>
               </tr>
             ) : (
               paginatedRecords.map((rec) => {
                 const isSelected = selectedOrderId === rec.order_id;
-                const hasDiscrepancy = rec.net_discrepancy > 0;
-                const isCopied = copiedId === rec.order_id;
+                const hasDiscrepancy = Math.abs(rec.net_discrepancy) > 0.01;
 
                 return (
                   <tr
                     key={rec.id}
-                    onClick={() => onSelectRecord(rec.order_id, rec.exception_id)}
+                    onClick={() => onSelectRecord(rec.order_id, rec.exception_id || undefined)}
                     style={{
-                      borderBottom: '1px solid var(--border-hairline)',
-                      background: isSelected ? '#EFF6FF' : '#FFFFFF',
+                      borderBottom: '1px solid #F1F5F9',
+                      background: isSelected ? '#EFF6FF' : hasDiscrepancy ? '#FEFCFC' : '#FFFFFF',
                       cursor: 'pointer',
-                      transition: 'background 0.1s'
+                      transition: 'background-color 0.12s ease',
                     }}
                     onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = 'var(--bg-subtle)';
+                      if (!isSelected) e.currentTarget.style.backgroundColor = '#F8FAFC';
                     }}
                     onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = '#FFFFFF';
+                      if (!isSelected) e.currentTarget.style.backgroundColor = hasDiscrepancy ? '#FEFCFC' : '#FFFFFF';
                     }}
                   >
-                    <td className="num-mono" style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>{rec.order_id}</span>
+                    {/* Order ID with Click-to-Copy */}
+                    <td style={{ padding: '10px 14px' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="num-mono" style={{ fontWeight: 600, color: '#0B72E7' }}>
+                          {rec.order_id}
+                        </span>
                         <button
                           onClick={(e) => handleCopy(rec.order_id, e)}
-                          title="Copy Order ID"
                           style={{
                             background: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            color: isCopied ? '#047857' : 'var(--text-subtle)',
                             padding: '2px',
+                            color: 'var(--blade-text-muted)',
                             display: 'flex',
-                            alignItems: 'center'
+                            alignItems: 'center',
                           }}
+                          title="Copy Order ID"
                         >
-                          {isCopied ? <Check size={11} /> : <Copy size={11} />}
+                          {copiedId === rec.order_id ? <Check size={11} color="#059669" /> : <Copy size={11} />}
                         </button>
                       </div>
                     </td>
-                    <td className="num-mono" style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>
-                      {rec.vendor_id}
+
+                    {/* Vendor Entity */}
+                    <td style={{ padding: '10px 14px', color: 'var(--blade-text-secondary)', fontWeight: 500 }}>
+                      <span className="num-mono" style={{ fontSize: '0.74rem' }}>{rec.vendor_id}</span>
                     </td>
-                    <td className="num-mono" style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 500, color: 'var(--text-primary)' }}>
+
+                    {/* Gross GMV */}
+                    <td className="num-mono" style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: 'var(--blade-text-primary)' }}>
                       ₹{rec.gross_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="num-mono" style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+
+                    {/* Expected Share */}
+                    <td className="num-mono" style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--blade-text-secondary)' }}>
                       ₹{rec.expected_settlement.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="num-mono" style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+
+                    {/* Actual Payout */}
+                    <td className="num-mono" style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--blade-text-secondary)' }}>
                       ₹{rec.actual_settlement.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="num-mono" style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: hasDiscrepancy ? '#B91C1C' : '#047857' }}>
-                      {hasDiscrepancy ? `+₹${rec.net_discrepancy.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '₹0.00'}
+
+                    {/* Net Delta */}
+                    <td className="num-mono" style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700 }}>
+                      {hasDiscrepancy ? (
+                        <span style={{ color: '#DC2626' }}>
+                          ₹{rec.net_discrepancy.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#059669' }}>₹0.00</span>
+                      )}
                     </td>
-                    <td style={{ padding: '8px 12px' }}>
+
+                    {/* Status */}
+                    <td style={{ padding: '10px 14px' }}>
                       {getStatusBadge(rec.status)}
                     </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+
+                    {/* Action Button */}
+                    <td style={{ padding: '10px 14px', textAlign: 'center' }}>
                       <button
-                        className={rec.status === "MATCHED" ? "btn-secondary" : "btn-primary"}
-                        style={{ padding: '3px 8px', fontSize: '0.7rem' }}
+                        className="btn-secondary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSelectRecord(rec.order_id, rec.exception_id);
+                          onSelectRecord(rec.order_id, rec.exception_id || undefined);
                         }}
+                        style={{ padding: '4px 8px', fontSize: '0.72rem' }}
                       >
-                        <Eye size={11} />
+                        <Eye size={12} />
                         <span>Inspect</span>
                       </button>
                     </td>
@@ -277,27 +294,27 @@ export const LedgerTable: React.FC<LedgerProps> = ({
       </div>
 
       {/* Pagination Footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid var(--border-hairline)' }}>
-        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-          Page <strong className="num-mono">{currentPage}</strong> of <strong className="num-mono">{totalPages}</strong>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
+        <span style={{ fontSize: '0.74rem', color: 'var(--blade-text-muted)' }}>
+          Page <span className="num-mono" style={{ fontWeight: 600, color: 'var(--blade-text-primary)' }}>{currentPage}</span> of <span className="num-mono">{totalPages}</span> ({filteredRecords.length} records)
         </span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <button
             className="btn-secondary"
-            style={{ padding: '4px 8px', fontSize: '0.72rem' }}
-            disabled={currentPage === 1}
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            style={{ padding: '4px 8px', opacity: currentPage === 1 ? 0.5 : 1 }}
           >
             <ChevronLeft size={13} />
-            <span>Previous</span>
+            <span>Prev</span>
           </button>
 
           <button
             className="btn-secondary"
-            style={{ padding: '4px 8px', fontSize: '0.72rem' }}
-            disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            style={{ padding: '4px 8px', opacity: currentPage === totalPages ? 0.5 : 1 }}
           >
             <span>Next</span>
             <ChevronRight size={13} />
