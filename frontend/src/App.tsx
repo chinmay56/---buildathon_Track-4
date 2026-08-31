@@ -173,6 +173,8 @@ export const App: React.FC = () => {
         onOpenChaosModal={() => setChaosModalOpen(true)}
         onOpenAuthModal={() => setAuthModalOpen(true)}
         onOpenOAuthModal={() => setOauthModalOpen(true)}
+        demoAccounts={demoAccounts}
+        onSelectUser={handleSelectUser}
       />
 
       {/* Main Layout (Sidebar + Content Canvas) */}
