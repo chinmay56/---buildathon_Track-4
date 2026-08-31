@@ -5,9 +5,9 @@ import {
   Wallet, 
   Flame, 
   Award, 
-  ShieldCheck,
-  Bot,
-  TrendingUp
+  Bot, 
+  TrendingUp,
+  Activity
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   exceptionCount,
 }) => {
-  const mainNav: NavItem[] = [
+  const coreOps: NavItem[] = [
     {
       id: 'overview',
       label: 'Settlement Ledger',
@@ -51,12 +51,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const intelligenceNav: NavItem[] = [
     {
       id: 'copilot',
-      label: 'Settlement Q&A Copilot',
+      label: 'Operations Copilot',
       icon: Bot,
     },
     {
       id: 'cash',
-      label: 'Cash & Float Position',
+      label: 'Cash & Float Health',
       icon: Wallet,
     },
     {
@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const evalNav: NavItem[] = [
+  const auditNav: NavItem[] = [
     {
       id: 'chaos',
       label: 'Chaos Simulator',
@@ -79,21 +79,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const renderNavGroup = (title: string, items: NavItem[]) => (
-    <div style={{ marginBottom: '20px' }}>
+  const renderNavSection = (title: string, items: NavItem[], isLast: boolean = false) => (
+    <div style={{ marginBottom: isLast ? '0' : '14px' }}>
       <div style={{
-        fontSize: '0.66rem',
+        fontSize: '0.64rem',
         fontWeight: 700,
-        color: 'var(--blade-text-muted)',
+        color: '#94A3B8',
         textTransform: 'uppercase',
-        letterSpacing: '0.06em',
-        padding: '0 12px 8px 12px',
+        letterSpacing: '0.08em',
+        padding: '0 12px 6px 12px',
         fontFamily: 'var(--font-heading)',
       }}>
         {title}
       </div>
 
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -107,39 +107,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 width: '100%',
-                padding: '8px 12px',
+                padding: '7px 10px',
                 borderRadius: '6px',
                 border: 'none',
-                background: isActive ? '#EFF6FF' : 'transparent',
-                color: isActive ? '#0B72E7' : 'var(--blade-text-secondary)',
+                background: isActive ? '#F1F5F9' : 'transparent',
+                color: isActive ? '#0F172A' : '#475569',
                 cursor: 'pointer',
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 fontFamily: 'var(--font-heading)',
                 fontWeight: isActive ? 600 : 500,
                 textAlign: 'left',
+                position: 'relative',
                 transition: 'all 0.12s ease',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.background = 'var(--blade-bg-subtle)';
-                  e.currentTarget.style.color = 'var(--blade-text-primary)';
+                  e.currentTarget.style.background = '#F8FAFC';
+                  e.currentTarget.style.color = '#0F172A';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--blade-text-secondary)';
+                  e.currentTarget.style.color = '#475569';
                 }
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Icon size={16} color={isActive ? '#0B72E7' : '#64748B'} />
+              {/* Active Left Indicator Bar */}
+              {isActive && (
+                <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: '6px',
+                  bottom: '6px',
+                  width: '3px',
+                  borderRadius: '0 3px 3px 0',
+                  background: '#0B72E7',
+                }} />
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', paddingLeft: isActive ? '4px' : '0', transition: 'padding-left 0.1s ease' }}>
+                <Icon size={15} color={isActive ? '#0B72E7' : '#64748B'} strokeWidth={isActive ? 2 : 1.75} />
                 <span>{item.label}</span>
               </div>
 
               {item.badge !== undefined && item.badge !== null && (
                 <span style={{
-                  fontSize: '0.68rem',
+                  fontSize: '0.66rem',
                   fontFamily: 'var(--font-mono)',
                   fontWeight: 700,
                   padding: '1px 6px',
@@ -155,13 +169,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </nav>
+      
+      {!isLast && (
+        <div style={{
+          height: '1px',
+          background: '#F1F5F9',
+          margin: '12px 6px 0 6px',
+        }} />
+      )}
     </div>
   );
 
   return (
     <aside style={{
-      width: '240px',
-      minWidth: '240px',
+      width: '230px',
+      minWidth: '230px',
       background: '#FFFFFF',
       borderRight: '1px solid var(--blade-border-medium)',
       display: 'flex',
@@ -173,28 +195,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
       zIndex: 30,
     }}>
       
-      {/* Navigation Groups */}
-      <div style={{ padding: '20px 10px' }}>
-        {renderNavGroup('Core Operations', mainNav)}
-        {renderNavGroup('Intelligence & Float', intelligenceNav)}
-        {renderNavGroup('Audit & Verification', evalNav)}
+      {/* Navigation Groups with Minimal Dissection */}
+      <div style={{ padding: '16px 8px' }}>
+        {renderNavSection('Core Operations', coreOps)}
+        {renderNavSection('Intelligence & Float', intelligenceNav)}
+        {renderNavSection('Audit & Benchmark', auditNav, true)}
       </div>
 
-      {/* Clean Minimalist Footer */}
+      {/* Clean Minimalist Footer Status */}
       <div style={{
-        padding: '16px',
-        borderTop: '1px solid var(--blade-border-medium)',
-        background: 'var(--blade-bg-subtle)',
-        fontSize: '0.72rem',
-        color: 'var(--blade-text-muted)',
+        padding: '14px 16px',
+        borderTop: '1px solid #F1F5F9',
+        background: '#FAFAFA',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', fontWeight: 600, color: 'var(--blade-text-secondary)', fontFamily: 'var(--font-heading)' }}>
-          <ShieldCheck size={14} color="#059669" />
-          <span>Deterministic Audit Engine</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669' }}></span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#334155', fontFamily: 'var(--font-heading)' }}>
+            Engine Active
+          </span>
         </div>
-        <p style={{ fontSize: '0.66rem', color: 'var(--blade-text-muted)' }}>
-          Razorpay Route • T+2 Settlement Cycle
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.66rem', color: '#94A3B8', fontFamily: 'var(--font-mono)' }}>
+          <Activity size={12} color="#059669" />
+          <span>14ms</span>
+        </div>
       </div>
 
     </aside>
