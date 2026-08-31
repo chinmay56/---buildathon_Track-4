@@ -17,8 +17,8 @@ interface NavItem {
   id: ActiveTab;
   label: string;
   icon: LucideIcon;
-  badge: string | null;
-  badgeType?: 'neutral' | 'danger' | 'purple' | 'success' | 'warning';
+  badge?: number | string | null;
+  badgeAlert?: boolean;
 }
 
 interface SidebarProps {
@@ -38,15 +38,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'overview',
       label: 'Settlement Ledger',
       icon: Layers,
-      badge: '500 Live',
-      badgeType: 'neutral',
     },
     {
       id: 'exceptions',
       label: 'Exceptions Hub',
       icon: AlertOctagon,
-      badge: exceptionCount > 0 ? `${exceptionCount}` : null,
-      badgeType: 'danger',
+      badge: exceptionCount > 0 ? exceptionCount : null,
+      badgeAlert: true,
     },
   ];
 
@@ -55,21 +53,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'copilot',
       label: 'Settlement Q&A Copilot',
       icon: Bot,
-      badge: 'AI Agent',
-      badgeType: 'purple',
     },
     {
       id: 'cash',
       label: 'Cash & Float Position',
       icon: Wallet,
-      badge: null,
     },
     {
       id: 'forecast',
       label: 'Forward 7-Day Forecast',
       icon: TrendingUp,
-      badge: 'T+7 Float',
-      badgeType: 'success',
     },
   ];
 
@@ -78,33 +71,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'chaos',
       label: 'Chaos Simulator',
       icon: Flame,
-      badge: 'Judge Demo',
-      badgeType: 'warning',
     },
     {
       id: 'benchmark',
       label: 'Ground Truth Audit',
       icon: Award,
-      badge: '100% Prec',
-      badgeType: 'success',
     },
   ];
 
   const renderNavGroup = (title: string, items: NavItem[]) => (
-    <div style={{ marginBottom: '18px' }}>
+    <div style={{ marginBottom: '20px' }}>
       <div style={{
         fontSize: '0.66rem',
         fontWeight: 700,
         color: 'var(--blade-text-muted)',
         textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        padding: '0 10px 8px 10px',
+        letterSpacing: '0.06em',
+        padding: '0 12px 8px 12px',
         fontFamily: 'var(--font-heading)',
       }}>
         {title}
       </div>
 
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -119,16 +108,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 justifyContent: 'space-between',
                 width: '100%',
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 border: 'none',
                 background: isActive ? '#EFF6FF' : 'transparent',
                 color: isActive ? '#0B72E7' : 'var(--blade-text-secondary)',
                 cursor: 'pointer',
-                fontSize: '0.8rem',
+                fontSize: '0.82rem',
                 fontFamily: 'var(--font-heading)',
                 fontWeight: isActive ? 600 : 500,
                 textAlign: 'left',
-                transition: 'all 0.15s ease',
+                transition: 'all 0.12s ease',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
@@ -143,30 +132,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Icon size={16} color={isActive ? '#0B72E7' : '#64748B'} />
                 <span>{item.label}</span>
               </div>
 
-              {item.badge && (
+              {item.badge !== undefined && item.badge !== null && (
                 <span style={{
-                  fontSize: '0.64rem',
+                  fontSize: '0.68rem',
+                  fontFamily: 'var(--font-mono)',
                   fontWeight: 700,
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  background: isActive 
-                    ? '#0B72E7' 
-                    : item.badgeType === 'danger'
-                    ? '#DC2626'
-                    : item.badgeType === 'purple'
-                    ? '#F5F3FF'
-                    : item.badgeType === 'success'
-                    ? '#ECFDF5'
-                    : item.badgeType === 'warning'
-                    ? '#FFFBEB'
-                    : '#F1F5F9',
-                  color: isActive || item.badgeType === 'danger' ? '#FFFFFF' : item.badgeType === 'purple' ? '#7C3AED' : item.badgeType === 'success' ? '#059669' : item.badgeType === 'warning' ? '#D97706' : '#475569',
-                  border: item.badgeType === 'purple' && !isActive ? '1px solid #DDD6FE' : item.badgeType === 'success' && !isActive ? '1px solid #A7F3D0' : item.badgeType === 'warning' && !isActive ? '1px solid #FDE68A' : 'none'
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  background: item.badgeAlert ? '#FEF2F2' : '#F1F5F9',
+                  color: item.badgeAlert ? '#DC2626' : '#64748B',
+                  border: item.badgeAlert ? '1px solid #FECACA' : '1px solid #E2E8F0',
                 }}>
                   {item.badge}
                 </span>
@@ -194,13 +174,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }}>
       
       {/* Navigation Groups */}
-      <div style={{ padding: '18px 12px' }}>
+      <div style={{ padding: '20px 10px' }}>
         {renderNavGroup('Core Operations', mainNav)}
         {renderNavGroup('Intelligence & Float', intelligenceNav)}
         {renderNavGroup('Audit & Verification', evalNav)}
       </div>
 
-      {/* Bottom Footer Section */}
+      {/* Clean Minimalist Footer */}
       <div style={{
         padding: '16px',
         borderTop: '1px solid var(--blade-border-medium)',
@@ -208,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         fontSize: '0.72rem',
         color: 'var(--blade-text-muted)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', fontWeight: 600, color: 'var(--blade-text-secondary)', fontFamily: 'var(--font-heading)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', fontWeight: 600, color: 'var(--blade-text-secondary)', fontFamily: 'var(--font-heading)' }}>
           <ShieldCheck size={14} color="#059669" />
           <span>Deterministic Audit Engine</span>
         </div>
