@@ -1,10 +1,26 @@
+"""
+ReAct AI Diagnostic Investigator Engine.
+Executes autonomous multi-tool diagnostic queries across Orders, Payments, Route Splits,
+Bank Payouts, and Customer Refunds, synthesizing root-cause findings and double-entry
+reversal proposals via OpenAI LLM agents.
+"""
+
+import os
+import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+from dotenv import load_dotenv
+import openai
 from backend.app.models.exception import (
     SettlementException, ExceptionStatus, ExceptionType,
     EvidencePackage, FinancialBreakdown, CorrectionProposal
 )
 from backend.app.agent.tools import AgentToolRegistry
+
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
 
 class AIInvestigator:
     def __init__(self, tool_registry: AgentToolRegistry):
@@ -92,48 +108,83 @@ class AIInvestigator:
             exception.audit_trail.extend(tool_call_log)
             return exception
 
-        # Handle Resolvable Cases
-        root_cause = ""
-        policy_cited = ""
-        action_type = ""
-        action_desc = ""
-        is_debit = True
+        # Compute Core Adjustment Details
         adjustment_amt = exposure_data.get("net_exposure_inr", exception.discrepancy_amount)
+        is_debit = True
+        action_type = "CREATE_VENDOR_CLAWBACK_DEBIT"
+        policy_cited = "POLICY_SEC_4_2_CLAWBACK_MANDATORY_POST_PAYOUT"
 
         if exception.exception_type == ExceptionType.REFUND_AFTER_PAYOUT_UNRECOVERED:
-            root_cause = f"Full customer refund processed after vendor payout settlement (UTR: {payouts_data[0].get('utr') if payouts_data else 'N/A'}) with ₹0 automatic clawback applied."
-            policy_cited = "POLICY_SEC_4_2_CLAWBACK_MANDATORY_POST_PAYOUT"
             action_type = "CREATE_VENDOR_CLAWBACK_DEBIT"
-            action_desc = f"Create vendor debit adjustment note for ₹{adjustment_amt} to recover payout post-refund."
+            policy_cited = "POLICY_SEC_4_2_CLAWBACK_MANDATORY_POST_PAYOUT"
             is_debit = True
-
         elif exception.exception_type == ExceptionType.EXCESS_COMMISSION_DOUBLE_COUNT:
-            root_cause = f"Duplicate platform commission entries recorded across split sub-ledger (expected ₹{expected_state.get('expected_platform_commission')}, charged ₹{order_data.get('amount') - exposure_data.get('actual_vendor_share')})."
-            policy_cited = "POLICY_SEC_2_1_STANDARD_COMMISSION_SCHEDULE"
             action_type = "REFUND_COMMISSION_CREDIT"
-            action_desc = f"Issue credit adjustment of ₹{adjustment_amt} to vendor {exception.vendor_id} to reverse excess commission."
+            policy_cited = "POLICY_SEC_2_1_STANDARD_COMMISSION_SCHEDULE"
             is_debit = False
-
         elif exception.exception_type == ExceptionType.TAX_RULE_MISMATCH:
-            root_cause = f"Discrepancy in recorded GST line. Applied 28% luxury rate instead of configured {order_data.get('tax_class')} rule."
-            policy_cited = "POLICY_SEC_3_GST_RULESET"
             action_type = "REBOOK_TAX_JOURNAL"
-            action_desc = f"Re-book tax journal delta ₹{adjustment_amt} to align with {order_data.get('tax_class')} schedule."
+            policy_cited = "POLICY_SEC_3_GST_RULESET"
             is_debit = True
-
         elif exception.exception_type == ExceptionType.ORPHANED_PAYOUT_RECORD:
-            root_cause = f"Settled payout record has no valid captured payment (Payment status: {pay_data.get('status')})."
-            policy_cited = "POLICY_SEC_6_VALID_CAPTURED_PAYMENT_PREREQUISITE"
             action_type = "HOLD_ORPHANED_PAYOUT"
-            action_desc = f"Freeze unverified vendor payout ₹{adjustment_amt} pending gateway UTR audit."
+            policy_cited = "POLICY_SEC_6_VALID_CAPTURED_PAYMENT_PREREQUISITE"
             is_debit = True
-
         elif exception.exception_type == ExceptionType.ROUNDING_DRIFT_EXCEEDED:
-            root_cause = f"Cumulative penny rounding variance ₹{adjustment_amt} exceeds allowable ₹{self.tools.policy.rounding_tolerance_inr} threshold."
-            policy_cited = "POLICY_SEC_8_ROUNDING_TOLERANCE_ENFORCEMENT"
             action_type = "BALANCE_ADJUSTMENT"
-            action_desc = f"Apply balancing adjustment ₹{adjustment_amt} to clear rounding sub-ledger variance."
+            policy_cited = "POLICY_SEC_8_ROUNDING_TOLERANCE_ENFORCEMENT"
             is_debit = False
+
+        # Synthesize Root Cause & Investigation via OpenAI LLM
+        root_cause = ""
+        action_desc = ""
+        if OPENAI_API_KEY:
+            try:
+                client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                investigation_prompt = f"""
+You are an autonomous AI Finance Controller auditing a Razorpay Route settlement anomaly.
+Synthesize a concise, authoritative Root Cause Analysis (1-2 sentences) and recommended action description based on the multi-source audit data:
+
+Order Data: {json.dumps(order_data)}
+Payment Data: {json.dumps(pay_data)}
+Splits: {json.dumps(splits_data)}
+Payouts: {json.dumps(payouts_data)}
+Refunds: {json.dumps(refunds_data)}
+Expected State: {json.dumps(expected_state)}
+Discrepancy Amount: ₹{adjustment_amt}
+Exception Type: {exception.exception_type.value if hasattr(exception.exception_type, 'value') else str(exception.exception_type)}
+
+Return JSON with format:
+{{
+  "root_cause": "concise explanation of discrepancy and mechanism",
+  "action_description": "concise description of double-entry ledger adjustment",
+  "policy_citation": "{policy_cited}"
+}}
+"""
+                res = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": investigation_prompt}],
+                    response_format={"type": "json_object"},
+                    temperature=0.1,
+                    max_tokens=250
+                )
+                parsed = json.loads(res.choices[0].message.content or "{}")
+                root_cause = parsed.get("root_cause", "")
+                action_desc = parsed.get("action_description", "")
+            except Exception as e:
+                print(f"⚠️ OpenAI Investigator Error: {e}, falling back to local synthesis.")
+
+        # Fallback if OpenAI call had an issue
+        if not root_cause:
+            if exception.exception_type == ExceptionType.REFUND_AFTER_PAYOUT_UNRECOVERED:
+                root_cause = f"Full customer refund processed after vendor payout settlement (UTR: {payouts_data[0].get('utr') if payouts_data else 'N/A'}) with ₹0 automatic clawback applied."
+                action_desc = f"Create vendor debit adjustment note for ₹{adjustment_amt} to recover payout post-refund."
+            elif exception.exception_type == ExceptionType.EXCESS_COMMISSION_DOUBLE_COUNT:
+                root_cause = f"Duplicate platform commission entries recorded across split sub-ledger (expected ₹{expected_state.get('expected_platform_commission')}, charged ₹{order_data.get('amount') - exposure_data.get('actual_vendor_share')})."
+                action_desc = f"Issue credit adjustment of ₹{adjustment_amt} to vendor {exception.vendor_id} to reverse excess commission."
+            else:
+                root_cause = f"Detected discrepancy of ₹{adjustment_amt} in settlement ledger equation."
+                action_desc = f"Post double-entry journal adjustment of ₹{adjustment_amt} to balance ledger."
 
         # Create Proposal
         proposal = self.tools.create_correction_proposal(
@@ -153,7 +204,7 @@ class AIInvestigator:
         ]
         if refunds_data:
             timeline.append(f"4. Refund {refunds_data[0].get('id')} processed for ₹{refunds_data[0].get('amount')} without clawback deduction")
-        timeline.append(f"5. AI Deterministic Reconciler calculated ₹{adjustment_amt} exposure against policy {policy_cited}")
+        timeline.append(f"5. AI Controller calculated ₹{adjustment_amt} exposure against policy {policy_cited}")
 
         exception.status = ExceptionStatus.AUTO_RESOLVABLE
         exception.investigated_at = datetime.utcnow().isoformat()
@@ -171,7 +222,7 @@ class AIInvestigator:
             expected_amount=expected_state.get("expected_vendor_share", 0.0),
             actual_amount=exposure_data.get("actual_vendor_share", 0.0),
             discrepancy_amount=adjustment_amt,
-            calculation_basis=f"Derived using policy {self.tools.policy.version} rules"
+            calculation_basis=f"Derived dynamically using policy {self.tools.policy.version} rules"
         )
         exception.proposed_correction = proposal
         exception.audit_trail.extend(tool_call_log)
