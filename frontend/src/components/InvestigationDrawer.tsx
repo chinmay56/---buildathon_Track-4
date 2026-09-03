@@ -368,7 +368,7 @@ export const InvestigationDrawer: React.FC<DrawerProps> = ({
                 disabled={approving || loading}
               >
                 <ShieldCheck size={14} />
-                <span>{approving ? "Verifying..." : "Approve & Execute Correction"}</span>
+                <span>{approving ? "Simulating & Verifying..." : "Approve & Simulate Correction"}</span>
               </button>
             )}
 
