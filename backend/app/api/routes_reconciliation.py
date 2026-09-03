@@ -15,7 +15,7 @@ def run_reconciliation(record_count: int = Query(75, ge=50, le=1000)):
         "matched_records": res.matched_records,
         "exception_count": len(res.exceptions),
         "processing_time_ms": round(res.processing_time_ms, 2),
-        "throughput_records_per_sec": round(res.throughput_rps, 1)
+        "throughput_records_per_sec": round(res.throughput_records_per_sec, 1)
     }
 
 @router.get("/current")
@@ -41,7 +41,7 @@ def get_current_status():
         "unresolved_count": unresolved_count,
         "total_exposure_inr": round(total_exposure, 2),
         "match_rate_pct": round((res.matched_records / res.total_records) * 100.0, 2) if res.total_records > 0 else 0.0,
-        "throughput_records_per_sec": round(res.throughput_rps, 1),
+        "throughput_records_per_sec": round(res.throughput_records_per_sec, 1),
         "processing_time_ms": round(res.processing_time_ms, 2)
     }
 

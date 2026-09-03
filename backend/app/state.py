@@ -61,9 +61,9 @@ class AppState:
                     id=o.id,
                     gross_amount=o.amount,
                     vendor_id=o.vendor_id,
-                    vendor_name=o.vendor_name,
-                    item_category=o.item_category,
-                    status=o.status.value
+                    vendor_name=getattr(o, "vendor_name", o.vendor_id),
+                    item_category=getattr(o, "item_category", "standard_goods"),
+                    status=o.status.value if hasattr(o.status, "value") else str(o.status)
                 ))
             # Insert Payments
             for p in data["payments"]:
@@ -71,9 +71,9 @@ class AppState:
                     id=p.id,
                     order_id=p.order_id,
                     amount=p.amount,
-                    gateway_fee=p.fee,
-                    gateway_tax=p.tax,
-                    status=p.status.value,
+                    gateway_fee=getattr(p, "gateway_fee", 0.0),
+                    gateway_tax=getattr(p, "gateway_tax", 0.0),
+                    status=p.status.value if hasattr(p.status, "value") else str(p.status),
                     method=p.method
                 ))
             # Insert Splits
@@ -83,8 +83,8 @@ class AppState:
                     order_id=s.order_id,
                     vendor_id=s.vendor_id,
                     vendor_amount=s.vendor_amount,
-                    marketplace_fee=s.marketplace_commission,
-                    marketplace_tax=s.marketplace_tax
+                    marketplace_fee=getattr(s, "platform_commission", 0.0),
+                    marketplace_tax=getattr(s, "route_transfer_tax", 0.0)
                 ))
             # Insert Payouts
             for p in data["payouts"]:
@@ -93,7 +93,7 @@ class AppState:
                     order_id=p.order_id,
                     vendor_id=p.vendor_id,
                     amount=p.amount,
-                    status=p.status.value,
+                    status=p.status.value if hasattr(p.status, "value") else str(p.status),
                     utr=p.utr
                 ))
             # Insert Refunds
@@ -107,7 +107,7 @@ class AppState:
             db.commit()
             db.close()
         except Exception as e:
-            print(f"⚠️ DB Persistence note: {e}")
+            print(f"[DB] Persistence note: {e}")
 
     def initialize_and_run(self, count: int = 75):
         data, gt = self.generator.generate_batch(count=count)
