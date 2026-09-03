@@ -56,7 +56,7 @@ export const App: React.FC = () => {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [user, demos, oauth, status, cash, ledger, excs, bench] = await Promise.all([
+      const results = await Promise.allSettled([
         fetchCurrentUser(),
         fetchDemoAccounts(),
         fetchOAuthStatus(),
@@ -66,16 +66,17 @@ export const App: React.FC = () => {
         fetchExceptions("ALL", "ALL"),
         fetchBenchmarkReport()
       ]);
-      setCurrentUser(user);
-      setDemoAccounts(demos);
-      setOauthStatus(oauth);
-      setBatchStatus(status);
-      setCashPosition(cash);
-      setLedgerRecords(ledger.records);
-      setExceptionsList(excs.exceptions);
-      setBenchmarkReport(bench);
+
+      if (results[0].status === 'fulfilled') setCurrentUser(results[0].value);
+      if (results[1].status === 'fulfilled') setDemoAccounts(results[1].value);
+      if (results[2].status === 'fulfilled') setOauthStatus(results[2].value);
+      if (results[3].status === 'fulfilled') setBatchStatus(results[3].value);
+      if (results[4].status === 'fulfilled') setCashPosition(results[4].value);
+      if (results[5].status === 'fulfilled') setLedgerRecords(results[5].value.records || []);
+      if (results[6].status === 'fulfilled') setExceptionsList(results[6].value.exceptions || []);
+      if (results[7].status === 'fulfilled') setBenchmarkReport(results[7].value);
     } catch (err) {
-      console.error("Error loading dashboard data:", err);
+      console.error("Error in loadAllData:", err);
     } finally {
       setLoading(false);
     }

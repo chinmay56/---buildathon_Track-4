@@ -19,15 +19,17 @@ export const LedgerTable: React.FC<LedgerProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const pageSize = 20;
 
-  const matchedCount = records.filter(r => r.status === "MATCHED").length;
-  const exceptionCount = records.filter(r => r.status !== "MATCHED" && r.status !== "VERIFIED_RESOLVED").length;
-  const reviewCount = records.filter(r => r.status === "HUMAN_REVIEW").length;
-  const verifiedCount = records.filter(r => r.status === "VERIFIED_RESOLVED").length;
+  const safeRecords = records || [];
+  const matchedCount = safeRecords.filter(r => r.status === "MATCHED").length;
+  const exceptionCount = safeRecords.filter(r => r.status !== "MATCHED" && r.status !== "VERIFIED_RESOLVED").length;
+  const reviewCount = safeRecords.filter(r => r.status === "HUMAN_REVIEW").length;
+  const verifiedCount = safeRecords.filter(r => r.status === "VERIFIED_RESOLVED").length;
 
-  const filteredRecords = records.filter(rec => {
+  const filteredRecords = safeRecords.filter(rec => {
+    const sTerm = searchTerm.toLowerCase();
     const matchesSearch = 
-      rec.order_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rec.vendor_id.toLowerCase().includes(searchTerm.toLowerCase());
+      (rec.order_id || '').toLowerCase().includes(sTerm) ||
+      (rec.vendor_id || '').toLowerCase().includes(sTerm);
 
     if (!matchesSearch) return false;
 
