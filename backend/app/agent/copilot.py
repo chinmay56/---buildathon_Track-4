@@ -6,6 +6,7 @@ capable of answering ledger queries, diagnosing specific exceptions, and evaluat
 
 import os
 import json
+import re
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -34,6 +35,51 @@ class CopilotQueryResponse(BaseModel):
     context_data: Optional[Dict[str, Any]] = None
     suggested_actions: List[str] = []
     cited_policy_clauses: List[str] = []
+
+
+def _clean_markdown_reply(raw_text: str) -> str:
+    """
+    Ensures the reply is clean, human-readable markdown text and strips out
+    any accidental JSON enclosures or metadata delimiters.
+    """
+    text = raw_text.strip()
+
+    # If wrapped in markdown code fence ```json ... ```
+    if text.startswith("```json") or text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+
+    # Check if raw text is a JSON object
+    if text.startswith("{") and text.endswith("}"):
+        try:
+            parsed = json.loads(text)
+            if isinstance(parsed, dict):
+                if "reply" in parsed:
+                    return str(parsed["reply"]).strip()
+                elif "response" in parsed:
+                    return str(parsed["response"]).strip()
+                elif "answer" in parsed:
+                    return str(parsed["answer"]).strip()
+                elif "finding" in parsed or "root_cause" in parsed:
+                    # Construct clean summary from fields
+                    lines = []
+                    if "finding" in parsed:
+                        lines.append(f"**Finding**: {parsed['finding']}")
+                    if "root_cause" in parsed:
+                        lines.append(f"**Root Cause**: {parsed['root_cause']}")
+                    if "discrepancy" in parsed or "difference" in parsed:
+                        lines.append(f"**Discrepancy**: ₹{parsed.get('discrepancy') or parsed.get('difference')}")
+                    if "recommended_action" in parsed:
+                        lines.append(f"**Recommended Action**: {parsed['recommended_action']}")
+                    return "\n\n".join(lines)
+        except Exception:
+            pass
+
+    # Strip custom action metadata tag if present
+    if "__ACTIONS_METADATA__" in text:
+        text = text.split("__ACTIONS_METADATA__")[0].strip()
+
+    return text
 
 
 def answer_settlement_query(req: CopilotQueryRequest) -> CopilotQueryResponse:
@@ -75,7 +121,7 @@ def answer_settlement_query(req: CopilotQueryRequest) -> CopilotQueryResponse:
                 "detector": e.detector_name,
                 "root_cause": e.root_cause or "Pending automated ReAct investigation"
             }
-            for e in exceptions[:10]  # sample top 10 for context density
+            for e in exceptions[:10]
         ]
     }
 
@@ -102,12 +148,11 @@ def answer_settlement_query(req: CopilotQueryRequest) -> CopilotQueryResponse:
         "You are the autonomous AI Finance Controller & Operations Copilot for a high-volume multi-vendor marketplace "
         "powered by Razorpay Route. You assist CFOs, finance controllers, and auditors with real-time ledger diagnostics, "
         "cash float risk analysis, refund clawback tracking, and double-entry reconciliation.\n\n"
-        "RULES:\n"
-        "1. Never give vague or generic advice. Always cite exact numbers, UTRs, Order IDs, and Razorpay Route mechanics from the provided live context.\n"
-        "2. When discussing clawbacks, explain the Razorpay Route clawback dilemma (customer refund issued after vendor payout settlement without automated debit note).\n"
-        "3. Keep formatting clean and professional with markdown bullet points, bold key figures, and code blocks where helpful.\n"
-        "4. At the end of your response, output a JSON block on a single line starting with '__ACTIONS_METADATA__' containing:\n"
-        "   {\"suggested_actions\": [\"Action 1\", \"Action 2\"], \"cited_policy_clauses\": [\"Clause 1\"]}"
+        "FORMATTING INSTRUCTIONS:\n"
+        "1. Always respond in natural, conversational, professional GitHub Markdown text. Do NOT output raw JSON.\n"
+        "2. Use bullet points, bold key figures (e.g. **₹11,250.00**), and clear section headers.\n"
+        "3. Cite exact numbers, Order IDs, UTRs, and Razorpay Route mechanics from the live context.\n"
+        "4. Clearly explain the Razorpay Route clawback/reversal mechanics when asked about refunds post-payout."
     )
 
     user_prompt = f"""
@@ -116,7 +161,7 @@ LIVE RECONCILIATION & FLOAT CONTEXT:
 
 {f"ORDER TARGET CONTEXT: {json.dumps(order_specific_context, indent=2)}" if order_specific_context else ""}
 
-USER QUERY:
+USER QUESTION:
 {msg_raw}
 """
 
@@ -130,28 +175,19 @@ USER QUERY:
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.2,
-                max_tokens=600
+                max_tokens=650
             )
 
             raw_reply = completion.choices[0].message.content or ""
-            
-            # Parse suggested actions and clauses if present
-            suggested_actions = ["Inspect Settlement Ledger", "Review Trapped Clawbacks", "Run Forward Forecast"]
-            cited_clauses = ["Razorpay Route Standard Settlement Policy v2.4"]
+            reply_text = _clean_markdown_reply(raw_reply)
 
-            if "__ACTIONS_METADATA__" in raw_reply:
-                parts = raw_reply.split("__ACTIONS_METADATA__")
-                reply_text = parts[0].strip()
-                try:
-                    meta = json.loads(parts[1].strip())
-                    if "suggested_actions" in meta:
-                        suggested_actions = meta["suggested_actions"]
-                    if "cited_policy_clauses" in meta:
-                        cited_clauses = meta["cited_policy_clauses"]
-                except Exception:
-                    pass
-            else:
-                reply_text = raw_reply.strip()
+            suggested_actions = ["Inspect Settlement Ledger", "Review Trapped Clawbacks", "Run Forward Forecast"]
+            if target_order_id:
+                suggested_actions = ["Inspect Order Drawer", "Approve & Simulate Correction", "View Route DAG"]
+
+            cited_clauses = ["Razorpay Route Standard Settlement Policy v2.4"]
+            if target_order_id:
+                cited_clauses = ["Policy Clause 4.2 (Transfer Reversal on Returns)"]
 
             return CopilotQueryResponse(
                 reply=reply_text,
@@ -160,26 +196,25 @@ USER QUERY:
                 cited_policy_clauses=cited_clauses
             )
         except Exception as e:
-            print(f"⚠️ OpenAI LLM Call Error: {e}, falling back to deterministic synthesis.")
+            print(f"[Copilot] OpenAI Error: {e}, falling back to deterministic synthesis.")
 
     # Fallback to local deterministic response if network/offline
     return _deterministic_fallback(msg_raw, status, cash, exceptions, target_order_id)
 
 
 def _deterministic_fallback(msg_raw: str, status: Any, cash: Any, exceptions: List[Any], target_order_id: Optional[str]) -> CopilotQueryResponse:
-    msg_lower = msg_raw.lower()
     if target_order_id:
         exc = next((e for e in exceptions if e.order_id == target_order_id), None)
         if exc:
             return CopilotQueryResponse(
-                reply=f"**Diagnosis for Order `{target_order_id}`:**\n\n- **Status**: `{exc.status}`\n- **Discrepancy**: **₹{exc.discrepancy_amount:,.2f}**\n- **Root Cause**: {exc.root_cause or 'Flagged by detector'}\n- **Vendor ID**: `{exc.vendor_id}`",
+                reply=f"### Diagnosis for Order `{target_order_id}`\n\n- **Status**: `{exc.status}`\n- **Discrepancy**: **₹{exc.discrepancy_amount:,.2f}**\n- **Root Cause**: {exc.root_cause or 'Anomaly flagged by deterministic detector'}\n- **Vendor ID**: `{exc.vendor_id}`",
                 context_data={"exception": exc.model_dump()},
-                suggested_actions=["Approve & Execute Correction", "Inspect Ledger Row"],
-                cited_policy_clauses=["Policy Clause 4.2 (Clawback Offset on Returns)"]
+                suggested_actions=["Approve & Simulate Correction", "Inspect Ledger Row"],
+                cited_policy_clauses=["Policy Clause 4.2 (Transfer Reversal on Returns)"]
             )
 
     return CopilotQueryResponse(
-        reply=f"**Current Working Capital & Cash Position Summary:**\n\n- **Batch Size**: {status.total_records} transactions\n- **Match Rate**: **{status.match_rate_pct}%**\n- **Trapped Clawbacks**: **₹{cash.unrecovered_vendor_clawbacks_inr:,.2f}**\n- **Safe T+2 Float**: **₹{cash.safe_settlement_disbursement_float_inr:,.2f}**",
+        reply=f"### Current Working Capital & Cash Position Summary\n\n- **Batch Size**: {status.total_records} transactions\n- **Match Rate**: **{status.match_rate_pct}%**\n- **Trapped Clawbacks**: **₹{cash.unrecovered_vendor_clawbacks_inr:,.2f}**\n- **Safe T+2 Float**: **₹{cash.safe_settlement_disbursement_float_inr:,.2f}**",
         context_data=status.model_dump(),
         suggested_actions=["View Forward 7-Day Forecast", "Review Trapped Clawbacks"],
         cited_policy_clauses=["Razorpay Route Standard Settlement Standard v2.4"]
