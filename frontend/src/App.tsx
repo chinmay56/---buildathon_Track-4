@@ -1,49 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { GlobalHeader } from './components/GlobalHeader';
 import { Sidebar } from './components/Sidebar';
 import type { ActiveTab } from './components/Sidebar';
+import { GlobalHeader } from './components/GlobalHeader';
 import { MetricsOverview } from './components/MetricsOverview';
-import { CashPositionCard } from './components/CashPositionCard';
-import { CashForecastView } from './components/CashForecastView';
-import { SettlementQACopilot } from './components/SettlementQACopilot';
 import { LedgerTable } from './components/LedgerTable';
 import { ExceptionsHub } from './components/ExceptionsHub';
+import { CashPositionCard } from './components/CashPositionCard';
+import { CashForecastView } from './components/CashForecastView';
 import { ChaosSimulatorView } from './components/ChaosSimulatorView';
-import { BenchmarkView } from './components/BenchmarkView';
+import { SettlementQACopilot } from './components/SettlementQACopilot';
 import { InvestigationDrawer } from './components/InvestigationDrawer';
 import { ChaosInjectorModal } from './components/ChaosInjectorModal';
-import { LoginModal } from './components/LoginModal';
-import { RazorpayOAuthModal } from './components/RazorpayOAuthModal';
 import {
   fetchCurrentUser,
   fetchDemoAccounts,
-  setAuthRole,
-  fetchOAuthStatus,
   fetchCurrentStatus,
-  runBatchReconciliation,
+  fetchCashPosition,
   fetchLedgerRecords,
   fetchExceptions,
   fetchExceptionDetail,
   runAIInvestigation,
   approveCorrection,
-  fetchCashPosition,
-  fetchBenchmarkReport
+  runBatchReconciliation,
+  setAuthRole
 } from './api';
-import type { BatchStatus, SettlementRecord, SettlementException, CashPosition, BenchmarkReport, AuthUser } from './types';
+import type { 
+  AuthUser, BatchStatus, CashPosition, 
+  SettlementRecord, SettlementException 
+} from './types';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [demoAccounts, setDemoAccounts] = useState<AuthUser[]>([]);
-  const [oauthStatus, setOauthStatus] = useState<{ connected: boolean; merchant_id?: string; scope?: string; connected_at?: string; client_id?: string } | null>(null);
-  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
-  const [oauthModalOpen, setOauthModalOpen] = useState<boolean>(false);
-
   const [batchStatus, setBatchStatus] = useState<BatchStatus | null>(null);
   const [cashPosition, setCashPosition] = useState<CashPosition | null>(null);
   const [ledgerRecords, setLedgerRecords] = useState<SettlementRecord[]>([]);
   const [exceptionsList, setExceptionsList] = useState<SettlementException[]>([]);
-  const [benchmarkReport, setBenchmarkReport] = useState<BenchmarkReport | null>(null);
   
   const [selectedException, setSelectedException] = useState<SettlementException | null>(null);
   const [selectedContext, setSelectedContext] = useState<any>(null);
@@ -59,22 +52,18 @@ export const App: React.FC = () => {
       const results = await Promise.allSettled([
         fetchCurrentUser(),
         fetchDemoAccounts(),
-        fetchOAuthStatus(),
         fetchCurrentStatus(),
         fetchCashPosition(),
         fetchLedgerRecords("ALL", 100, 0),
-        fetchExceptions("ALL", "ALL"),
-        fetchBenchmarkReport()
+        fetchExceptions("ALL", "ALL")
       ]);
 
       if (results[0].status === 'fulfilled') setCurrentUser(results[0].value);
       if (results[1].status === 'fulfilled') setDemoAccounts(results[1].value);
-      if (results[2].status === 'fulfilled') setOauthStatus(results[2].value);
-      if (results[3].status === 'fulfilled') setBatchStatus(results[3].value);
-      if (results[4].status === 'fulfilled') setCashPosition(results[4].value);
-      if (results[5].status === 'fulfilled') setLedgerRecords(results[5].value.records || []);
-      if (results[6].status === 'fulfilled') setExceptionsList(results[6].value.exceptions || []);
-      if (results[7].status === 'fulfilled') setBenchmarkReport(results[7].value);
+      if (results[2].status === 'fulfilled') setBatchStatus(results[2].value);
+      if (results[3].status === 'fulfilled') setCashPosition(results[3].value);
+      if (results[4].status === 'fulfilled') setLedgerRecords(results[4].value.records || []);
+      if (results[5].status === 'fulfilled') setExceptionsList(results[5].value.exceptions || []);
     } catch (err) {
       console.error("Error in loadAllData:", err);
     } finally {
@@ -109,30 +98,43 @@ export const App: React.FC = () => {
     setLoading(true);
     try {
       const idToFetch = exceptionId || `EXC_RC_${orderId}`;
-      try {
-        const detail = await fetchExceptionDetail(idToFetch);
-        setSelectedException(detail.exception);
-        setSelectedContext(detail.context);
-      } catch {
-        const rec = ledgerRecords.find(r => r.order_id === orderId);
-        setSelectedException(null);
-        setSelectedContext({
-          order: { id: rec?.order_id, amount: rec?.gross_amount, item_category: 'standard_goods', vendor_id: rec?.vendor_id },
-          payment: { id: `pay_${rec?.order_id?.slice(4)}`, status: 'captured', method: 'upi' },
-          payouts: [{ id: `pout_${rec?.order_id?.slice(4)}`, amount: rec?.actual_settlement, status: 'settled' }],
-          refunds: []
-        });
-      }
+      const res = await fetchExceptionDetail(idToFetch);
+      setSelectedException(res.exception);
+      setSelectedContext(res.context);
       setDrawerOpen(true);
     } catch (err) {
-      console.error("Error fetching record detail:", err);
+      try {
+        const directId = exceptionId || orderId;
+        const res = await fetchExceptionDetail(directId);
+        setSelectedException(res.exception);
+        setSelectedContext(res.context);
+        setDrawerOpen(true);
+      } catch (innerErr) {
+        console.warn("Could not load deep exception context:", innerErr);
+        setSelectedException(null);
+        setSelectedContext(null);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleSelectExceptionObj = async (exc: SettlementException) => {
-    await handleSelectRecord(exc.order_id, exc.id);
+    setSelectedException(exc);
+    setSelectedOrderId(exc.order_id);
+    setLoading(true);
+    try {
+      const res = await fetchExceptionDetail(exc.id);
+      setSelectedException(res.exception);
+      setSelectedContext(res.context);
+      setDrawerOpen(true);
+    } catch (err) {
+      console.warn("Using inline exception object:", err);
+      setSelectedContext(null);
+      setDrawerOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInvestigate = async (exceptionId: string) => {
@@ -141,8 +143,8 @@ export const App: React.FC = () => {
       const res = await runAIInvestigation(exceptionId);
       setSelectedException(res.exception);
       await loadAllData();
-    } catch (err) {
-      alert("Investigation failed: " + err);
+    } catch (err: any) {
+      alert("AI Investigation Note: " + (err.message || err));
     } finally {
       setLoading(false);
     }
@@ -151,42 +153,39 @@ export const App: React.FC = () => {
   const handleApprove = async (exceptionId: string) => {
     setLoading(true);
     try {
-      const res = await approveCorrection(exceptionId, `${currentUser?.name || "Arjun Mehta"} (${currentUser?.role || "Controller"})`);
+      const res = await approveCorrection(exceptionId);
       setSelectedException(res.exception);
       await loadAllData();
     } catch (err: any) {
-      alert(err.message || "Approval/verification failed: " + err);
+      alert("RBAC Authorization Notice: " + (err.message || err));
     } finally {
       setLoading(false);
     }
   };
 
+  const unresolvedCount = exceptionsList.filter(
+    e => e.status !== "VERIFIED_RESOLVED"
+  ).length;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--blade-bg-app)' }}>
       
-      {/* Top Global Navigation Bar */}
+      {/* Global Top Navbar */}
       <GlobalHeader
         currentUser={currentUser}
-        oauthConnected={oauthStatus?.connected ?? true}
-        loading={loading}
-        onRefresh={loadAllData}
-        onRunBatch={handleRunBatch}
-        onOpenChaosModal={() => setChaosModalOpen(true)}
-        onOpenAuthModal={() => setAuthModalOpen(true)}
-        onOpenOAuthModal={() => setOauthModalOpen(true)}
         demoAccounts={demoAccounts}
+        loading={loading}
+        onRunBatch={handleRunBatch}
         onSelectUser={handleSelectUser}
       />
 
-      {/* Main Layout (Sidebar + Content Canvas) */}
-      <div style={{ display: 'flex', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         
-        {/* Left Sidebar */}
+        {/* Left Vertical Navigation */}
         <Sidebar
           activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          exceptionCount={exceptionsList.length}
-          unresolvedCount={batchStatus?.unresolved_count || 0}
+          onSelectTab={(tab) => setActiveTab(tab)}
+          exceptionCount={unresolvedCount}
         />
 
         {/* Main Content Area */}
@@ -206,8 +205,7 @@ export const App: React.FC = () => {
                     : activeTab === 'copilot' ? 'Q&A Copilot' 
                     : activeTab === 'cash' ? 'Cash & Float' 
                     : activeTab === 'forecast' ? 'Forward Forecast' 
-                    : activeTab === 'chaos' ? 'Chaos Lab' 
-                    : 'Benchmark Report'}
+                    : 'Chaos Lab'}
                 </span>
               </div>
               <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--blade-text-primary)', letterSpacing: '-0.02em' }}>
@@ -216,8 +214,7 @@ export const App: React.FC = () => {
                   : activeTab === 'copilot' ? 'Settlement Operations Q&A Copilot'
                   : activeTab === 'cash' ? 'Cash Float & Liquidity Position' 
                   : activeTab === 'forecast' ? 'Forward 7-Day Liquidity Forecast'
-                  : activeTab === 'chaos' ? 'Chaos Scenario Simulator' 
-                  : 'Ground Truth Benchmark Matrix'}
+                  : 'Chaos Scenario Simulator'}
               </h1>
             </div>
           </div>
@@ -297,20 +294,12 @@ export const App: React.FC = () => {
           {/* Tab 6: Chaos Simulator View */}
           {activeTab === 'chaos' && (
             <ChaosSimulatorView
-              onScenarioInjected={async (newExc) => {
+              onScenarioInjected={async (newExc: any) => {
                 await loadAllData();
                 if (newExc) {
                   handleSelectRecord(newExc.order_id, newExc.id);
                 }
               }}
-              loading={loading}
-            />
-          )}
-
-          {/* Tab 7: Ground Truth Benchmark View */}
-          {activeTab === 'benchmark' && (
-            <BenchmarkView
-              report={benchmarkReport}
               loading={loading}
             />
           )}
@@ -331,35 +320,16 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Chaos Injector Quick Modal */}
+      {/* Chaos Injector Modal */}
       {chaosModalOpen && (
         <ChaosInjectorModal
           onClose={() => setChaosModalOpen(false)}
-          onSuccess={async (newExc) => {
+          onSuccess={async (newExc: any) => {
             await loadAllData();
             if (newExc) {
               handleSelectRecord(newExc.order_id, newExc.id);
             }
           }}
-        />
-      )}
-
-      {/* RBAC Identity & Login Switcher Modal */}
-      {authModalOpen && (
-        <LoginModal
-          currentUser={currentUser}
-          demoAccounts={demoAccounts}
-          onClose={() => setAuthModalOpen(false)}
-          onSelectUser={handleSelectUser}
-        />
-      )}
-
-      {/* Razorpay OAuth 2.0 Partner Modal */}
-      {oauthModalOpen && (
-        <RazorpayOAuthModal
-          oauthStatus={oauthStatus}
-          onClose={() => setOauthModalOpen(false)}
-          onRefresh={loadAllData}
         />
       )}
 

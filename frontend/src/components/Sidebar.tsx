@@ -4,14 +4,13 @@ import {
   AlertOctagon, 
   Wallet, 
   Flame, 
-  Award, 
   Bot, 
   TrendingUp,
   Activity
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type ActiveTab = 'overview' | 'exceptions' | 'copilot' | 'cash' | 'forecast' | 'chaos' | 'benchmark';
+export type ActiveTab = 'overview' | 'exceptions' | 'copilot' | 'cash' | 'forecast' | 'chaos';
 
 interface NavItem {
   id: ActiveTab;
@@ -64,18 +63,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Forward 7-Day Forecast',
       icon: TrendingUp,
     },
-  ];
-
-  const auditNav: NavItem[] = [
     {
       id: 'chaos',
       label: 'Chaos Simulator',
       icon: Flame,
-    },
-    {
-      id: 'benchmark',
-      label: 'Ground Truth Audit',
-      icon: Award,
     },
   ];
 
@@ -198,8 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Navigation Groups with Minimal Dissection */}
       <div style={{ padding: '16px 8px' }}>
         {renderNavSection('Core Operations', coreOps)}
-        {renderNavSection('Intelligence & Float', intelligenceNav)}
-        {renderNavSection('Audit & Benchmark', auditNav, true)}
+        {renderNavSection('Intelligence & Float', intelligenceNav, true)}
       </div>
 
       {/* Clean Minimalist Footer Status */}
