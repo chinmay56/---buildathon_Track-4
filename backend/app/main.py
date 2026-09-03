@@ -17,9 +17,9 @@ from backend.app.state import app_state
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize SQL database schema & seed 500-record batch
+    # Initialize SQL database schema & seed 75-record batch
     init_db()
-    app_state.initialize_and_run(count=500)
+    app_state.initialize_and_run(count=75)
     yield
 
 

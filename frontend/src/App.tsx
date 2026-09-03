@@ -62,7 +62,7 @@ export const App: React.FC = () => {
         fetchOAuthStatus(),
         fetchCurrentStatus(),
         fetchCashPosition(),
-        fetchLedgerRecords("ALL", 500, 0),
+        fetchLedgerRecords("ALL", 100, 0),
         fetchExceptions("ALL", "ALL"),
         fetchBenchmarkReport()
       ]);
@@ -94,7 +94,7 @@ export const App: React.FC = () => {
   const handleRunBatch = async () => {
     setLoading(true);
     try {
-      await runBatchReconciliation(500);
+      await runBatchReconciliation(75);
       await loadAllData();
     } catch (err) {
       alert("Error reconciling batch: " + err);
@@ -200,7 +200,7 @@ export const App: React.FC = () => {
                 <span>Settlements</span>
                 <span>/</span>
                 <span style={{ fontWeight: 600, color: '#0B72E7' }}>
-                  {activeTab === 'overview' ? '500-Batch Ledger' 
+                  {activeTab === 'overview' ? '75-Batch Ledger' 
                     : activeTab === 'exceptions' ? 'Exceptions Triage' 
                     : activeTab === 'copilot' ? 'Q&A Copilot' 
                     : activeTab === 'cash' ? 'Cash & Float' 

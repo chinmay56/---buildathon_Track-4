@@ -191,7 +191,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
           ) : (
             <Play size={13} fill="currentColor" />
           )}
-          <span>Reconcile 500</span>
+          <span>Reconcile 75</span>
         </button>
 
         {/* User Identity & Instant Dropdown Switcher */}

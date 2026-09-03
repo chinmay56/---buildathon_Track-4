@@ -82,7 +82,7 @@ export async function fetchCurrentStatus(): Promise<BatchStatus> {
   return res.json();
 }
 
-export async function runBatchReconciliation(count: number = 500): Promise<{ status: string; batch_id: string; total_records: number; matched_records: number; exception_count: number; processing_time_ms: number; throughput_records_per_sec: number }> {
+export async function runBatchReconciliation(count: number = 75): Promise<{ status: string; batch_id: string; total_records: number; matched_records: number; exception_count: number; processing_time_ms: number; throughput_records_per_sec: number }> {
   const res = await fetch(`${API_BASE}/reconciliation/run?record_count=${count}`, {
     method: 'POST',
     headers: getHeaders()
@@ -91,7 +91,7 @@ export async function runBatchReconciliation(count: number = 500): Promise<{ sta
   return res.json();
 }
 
-export async function fetchLedgerRecords(statusFilter: string = "ALL", limit: number = 500, skip: number = 0): Promise<{ total: number; records: SettlementRecord[] }> {
+export async function fetchLedgerRecords(statusFilter: string = "ALL", limit: number = 100, skip: number = 0): Promise<{ total: number; records: SettlementRecord[] }> {
   const queryParam = statusFilter && statusFilter !== "ALL" ? `&status=${statusFilter}` : "";
   const res = await fetch(`${API_BASE}/reconciliation/ledger?limit=${limit}&offset=${skip}${queryParam}`, { headers: getHeaders() });
   if (!res.ok) throw new Error("Failed to fetch ledger records");

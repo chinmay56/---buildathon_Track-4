@@ -5,7 +5,7 @@ from backend.app.state import state
 router = APIRouter(prefix="/api/reconciliation", tags=["Reconciliation"])
 
 @router.post("/run")
-def run_reconciliation(record_count: int = Query(500, ge=50, le=1000)):
+def run_reconciliation(record_count: int = Query(75, ge=50, le=1000)):
     state.initialize_and_run(count=record_count)
     res = state.last_run_result
     return {
@@ -21,7 +21,7 @@ def run_reconciliation(record_count: int = Query(500, ge=50, le=1000)):
 @router.get("/current")
 def get_current_status():
     if not state.last_run_result:
-        state.initialize_and_run(count=500)
+        state.initialize_and_run(count=75)
     
     res = state.last_run_result
     
@@ -52,7 +52,7 @@ def get_ledger_records(
     offset: int = 0
 ):
     if not state.settlement_records:
-        state.initialize_and_run(count=500)
+        state.initialize_and_run(count=75)
 
     records = state.settlement_records
     if status and status != "ALL":

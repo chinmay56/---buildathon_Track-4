@@ -11,6 +11,8 @@ from backend.app.agent.investigator import AIInvestigator
 from backend.app.ledger.journal_ledger import DoubleEntryJournalLedger
 from backend.app.ledger.correction_executor import CorrectionExecutor
 from backend.app.ledger.verifier import PostCorrectionVerifier
+from backend.app.db.session import SessionLocal
+from backend.app.db.models import OrderRecord, PaymentRecord, SplitRecord, PayoutRecord, RefundRecord, SettlementExceptionRecord
 
 class AppState:
     def __init__(self):
@@ -35,7 +37,79 @@ class AppState:
         self.investigator: Optional[AIInvestigator] = None
         self.evaluator: Optional[GroundTruthEvaluator] = None
 
-    def initialize_and_run(self, count: int = 500):
+        # Auto-initialize 75-record batch immediately on startup
+        self.initialize_and_run(count=75)
+
+    def persist_to_db(self, data: Dict[str, Any]):
+        """
+        Saves all generated/loaded records into the SQL database (SQLite / PostgreSQL / Supabase).
+        """
+        try:
+            db = SessionLocal()
+            # Clear previous records for fresh run
+            db.query(SplitRecord).delete()
+            db.query(PayoutRecord).delete()
+            db.query(RefundRecord).delete()
+            db.query(PaymentRecord).delete()
+            db.query(OrderRecord).delete()
+            db.query(SettlementExceptionRecord).delete()
+            db.commit()
+
+            # Insert Orders
+            for o in data["orders"]:
+                db.add(OrderRecord(
+                    id=o.id,
+                    gross_amount=o.amount,
+                    vendor_id=o.vendor_id,
+                    vendor_name=o.vendor_name,
+                    item_category=o.item_category,
+                    status=o.status.value
+                ))
+            # Insert Payments
+            for p in data["payments"]:
+                db.add(PaymentRecord(
+                    id=p.id,
+                    order_id=p.order_id,
+                    amount=p.amount,
+                    gateway_fee=p.fee,
+                    gateway_tax=p.tax,
+                    status=p.status.value,
+                    method=p.method
+                ))
+            # Insert Splits
+            for s in data["splits"]:
+                db.add(SplitRecord(
+                    id=s.id,
+                    order_id=s.order_id,
+                    vendor_id=s.vendor_id,
+                    vendor_amount=s.vendor_amount,
+                    marketplace_fee=s.marketplace_commission,
+                    marketplace_tax=s.marketplace_tax
+                ))
+            # Insert Payouts
+            for p in data["payouts"]:
+                db.add(PayoutRecord(
+                    id=p.id,
+                    order_id=p.order_id,
+                    vendor_id=p.vendor_id,
+                    amount=p.amount,
+                    status=p.status.value,
+                    utr=p.utr
+                ))
+            # Insert Refunds
+            for r in data["refunds"]:
+                db.add(RefundRecord(
+                    id=r.id,
+                    order_id=r.order_id,
+                    amount=r.amount,
+                    reason=r.reason
+                ))
+            db.commit()
+            db.close()
+        except Exception as e:
+            print(f"⚠️ DB Persistence note: {e}")
+
+    def initialize_and_run(self, count: int = 75):
         data, gt = self.generator.generate_batch(count=count)
         self.ground_truth = gt
         self.evaluator = GroundTruthEvaluator(self.ground_truth)
@@ -79,9 +153,12 @@ class AppState:
         )
         self.investigator = AIInvestigator(self.tool_registry)
 
+        # Persist batch to DB
+        self.persist_to_db(data)
+
     def get_batch_status(self) -> BatchStatus:
         if not self.last_run_result:
-            self.initialize_and_run(500)
+            self.initialize_and_run(75)
         return self.last_run_result.to_batch_status(
             total_resolved=sum(1 for e in self.exceptions.values() if e.status.value == "VERIFIED_RESOLVED"),
             total_unresolved=sum(1 for e in self.exceptions.values() if e.status.value == "UNRESOLVED"),
@@ -90,7 +167,7 @@ class AppState:
 
     def get_cash_position(self) -> CashPosition:
         if not self.last_run_result:
-            self.initialize_and_run(500)
+            self.initialize_and_run(75)
             
         total_gmv = sum(o.amount for o in self.orders.values())
         unrecovered_clawbacks = sum(

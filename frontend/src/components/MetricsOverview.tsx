@@ -58,7 +58,7 @@ export const MetricsOverview: React.FC<MetricsProps> = ({ status }) => {
               {status.throughput_records_per_sec.toLocaleString()} <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--blade-text-muted)' }}>rec/s</span>
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--blade-text-muted)', marginTop: '4px' }}>
-              500 tx batch in <span className="num-mono" style={{ fontWeight: 600, color: 'var(--blade-text-primary)' }}>{status.processing_time_ms} ms</span>
+              <span className="num-mono" style={{ fontWeight: 600, color: 'var(--blade-text-primary)' }}>{status.total_records}</span> tx batch in <span className="num-mono" style={{ fontWeight: 600, color: 'var(--blade-text-primary)' }}>{status.processing_time_ms} ms</span>
             </div>
           </div>
           {/* Micro Sparkline */}
