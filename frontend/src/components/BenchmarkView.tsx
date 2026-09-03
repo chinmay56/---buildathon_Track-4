@@ -55,7 +55,7 @@ export const BenchmarkView: React.FC<BenchmarkViewProps> = ({ report, loading })
       {/* 2x2 Confusion Matrix */}
       <div className="rzp-panel" style={{ padding: '18px 20px' }}>
         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '10px' }}>
-          2x2 Confusion Matrix (Evaluation on 500-Record Batch)
+          2x2 Confusion Matrix (Evaluation on {m.total_records}-Record Batch)
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>

@@ -7,13 +7,16 @@ from backend.app.models.domain import (
     Order, Payment, Split, Payout, Refund,
     OrderStatus, PaymentStatus, PayoutStatus, RefundStatus, ClawbackStatus
 )
+from backend.app.data.synthetic_generator import GroundTruthEntry
 from backend.app.models.exception import ExceptionType
+from backend.app.agent.tools import AgentToolRegistry
+from backend.app.agent.investigator import AIInvestigator
 
 router = APIRouter(prefix="/api/chaos", tags=["Chaos Injector"])
 
 @router.post("/inject")
 def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
-    scenario = payload.get("scenario") # LATE_REFUND, DUPLICATE_COMMISSION, TAX_MISMATCH, GHOST_PAYOUT, AMBIGUOUS_TIER
+    scenario = payload.get("scenario")  # LATE_REFUND, DUPLICATE_COMMISSION, TAX_MISMATCH, GHOST_PAYOUT, AMBIGUOUS_TIER
     custom_amount = float(payload.get("amount", 12500.0))
     vendor_id = payload.get("vendor_id", "vend_007")
 
@@ -21,8 +24,15 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
     order_id = f"ord_chaos_{order_idx:04d}"
     now = datetime.utcnow()
 
+    gt_entry = GroundTruthEntry(
+        order_id=order_id,
+        is_exception=True,
+        exception_type=scenario,
+        expected_discrepancy=0.0,
+        description=f"Live chaos scenario: {scenario}"
+    )
+
     if scenario == "LATE_REFUND":
-        # Order settled, payout made, refund issued post-settlement with 0 clawback
         order = Order(
             id=order_id,
             customer_id="cust_chaos_99",
@@ -73,7 +83,7 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
             status=RefundStatus.PROCESSED,
             created_at=(now - timedelta(hours=1)).isoformat(),
             clawback_required=True,
-            clawback_amount=0.0, # DISCREPANCY
+            clawback_amount=0.0,
             clawback_status=ClawbackStatus.UNRECOVERED,
             reason="live_judge_chaos_test"
         )
@@ -83,6 +93,8 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
         state.splits.setdefault(order_id, []).append(split)
         state.payouts.setdefault(order_id, []).append(payout)
         state.refunds.setdefault(order_id, []).append(refund)
+
+        gt_entry.expected_discrepancy = vendor_payout
 
     elif scenario == "DUPLICATE_COMMISSION":
         order = Order(
@@ -104,7 +116,6 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
             utr=f"UTR_LIVE_{uuid.uuid4().hex[:8].upper()}",
             captured_at=now.isoformat()
         )
-        # Charge 25% commission instead of 10%
         comm = round(custom_amount * 0.25, 2)
         vendor_payout = round(custom_amount - comm, 2)
         split = Split(
@@ -133,6 +144,8 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
         state.splits.setdefault(order_id, []).append(split)
         state.payouts.setdefault(order_id, []).append(payout)
 
+        gt_entry.expected_discrepancy = round(comm - (custom_amount * 0.10), 2)
+
     elif scenario == "GHOST_PAYOUT":
         order = Order(
             id=order_id,
@@ -148,16 +161,17 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
             id=f"pay_chaos_{order_idx:04d}",
             order_id=order_id,
             amount=custom_amount,
-            status=PaymentStatus.FAILED, # FAILED PAYMENT
+            status=PaymentStatus.FAILED,
             method="netbanking",
             utr="UTR_FAILED",
             captured_at=now.isoformat()
         )
+        vendor_payout = round(custom_amount * 0.90, 2)
         payout = Payout(
             id=f"pout_chaos_{order_idx:04d}",
             order_id=order_id,
             vendor_id=vendor_id,
-            amount=round(custom_amount * 0.90, 2),
+            amount=vendor_payout,
             status=PayoutStatus.SETTLED,
             utr=f"GHOST_UTR_{uuid.uuid4().hex[:8].upper()}",
             settled_at=now.isoformat(),
@@ -166,6 +180,8 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
         state.orders[order_id] = order
         state.payments[order_id] = payment
         state.payouts.setdefault(order_id, []).append(payout)
+
+        gt_entry.expected_discrepancy = vendor_payout
 
     elif scenario == "AMBIGUOUS_TIER":
         order = Order(
@@ -189,30 +205,30 @@ def inject_chaos_scenario(payload: Dict[str, Any] = Body(...)):
         )
         state.orders[order_id] = order
         state.payments[order_id] = payment
+        gt_entry.expected_discrepancy = 0.0
 
-    # Re-run reconciliation on the new batch
-    all_splits = [s for sublist in state.splits.values() for s in sublist]
-    all_payouts = [p for sublist in state.payouts.values() for p in sublist]
-    all_refunds = [r for sublist in state.refunds.values() for r in sublist]
+    # Save to ground truth dict
+    state.ground_truth[order_id] = gt_entry
 
+    # Re-run reconciliation on the new batch dynamically
     result = state.reconciler.reconcile_batch(
-        orders=list(state.orders.values()),
-        payments=list(state.payments.values()),
-        splits=all_splits,
-        payouts=all_payouts,
-        refunds=all_refunds
+        orders=state.orders,
+        payments=state.payments,
+        splits=state.splits,
+        payouts=state.payouts,
+        refunds=state.refunds
     )
     state.last_run_result = result
     state.settlement_records = result.settlement_records
     state.exceptions = {e.id: e for e in result.exceptions}
 
-    # Update tool registry
+    # Update tool registry for ReAct AI
     state.tool_registry = AgentToolRegistry(
-        orders=list(state.orders.values()),
-        payments=list(state.payments.values()),
-        splits=all_splits,
-        payouts=all_payouts,
-        refunds=all_refunds,
+        orders=state.orders,
+        payments=state.payments,
+        splits=state.splits,
+        payouts=state.payouts,
+        refunds=state.refunds,
         policy=state.policy
     )
     state.investigator = AIInvestigator(state.tool_registry)
