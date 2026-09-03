@@ -1,59 +1,70 @@
 # 5-Minute Hackathon Demo Script & Judge Pitch
 
-**Product**: Razorpay Settlement Controller  
+**Product**: Settlement Controller  
 **Track 04**: AI Finance Controller — *Run the books and the cash position*
 
 ---
 
-## ⏱️ Minute 0:00 - 1:00 | The Problem & Real-World Reality
+## ⏱️ Minute 0:00 - 1:00 | The Thesis & Industry Problem
 > *"Good morning judges. In 2026, verification capacity—not generation speed—is the bottleneck in finance operations.*
 > 
-> *A customer's payment can succeed on Razorpay, but downstream marketplace ledgers can still be broken. A customer refunds an item 4 hours after a vendor is paid; a duplicate commission line is deducted; or rounding drift accumulates.*
+> *Razorpay already provides world-class financial primitives: Payments, Route Transfers, Reversals, Customer Refunds, and Settlement Reports.*
+> *Our thesis is simple:*
 > 
-> *Today, we present **Settlement Controller**: an autonomous AI finance controller that closes the finance-ops loop across 500+ multi-source transactions with deterministic math guarantees, verifiable proof, and honest ambiguity handling."*
+> **'Razorpay provides the financial primitives. Settlement Controller continuously verifies that those primitives collectively produce the correct financial state across the full lifecycle.'**
+> 
+> *We close the loop:*
+> $$\mathbf{RECONCILE} \longrightarrow \mathbf{INVESTIGATE} \longrightarrow \mathbf{RESOLVE} \longrightarrow \mathbf{VERIFY}$$
+> *Let's see it live on a 75-transaction multi-vendor marketplace dataset."*
 
 ---
 
-## ⏱️ Minute 1:00 - 2:00 | Batch Reconciler & Speed
-- Click **"Reconcile 500 Batch"**.
+## ⏱️ Minute 1:00 - 2:00 | Batch Reconciliation & Cash Float
+- Click **"Reconcile 75"** in the topbar.
 - Point to the KPI Cards:
-  > *"Notice our engine processed 500 multi-entity records (orders, payments, splits, payouts, refunds, taxes) in under 40 milliseconds — that's over **12,000 records/second** throughput.*
-  > *It identified **24 exceptions** representing **₹1,49,677.30** in at-risk cash exposure."*
-- Point to the **Cash Float Widget**:
-  > *"We don't just match rows; we run the cash position: showing trapped vendor clawback float and calculating the safe T+2 settlement buffer to disburse."*
+  > *"Our Deterministic Finance Engine processed all multi-source records (Orders, Razorpay Payments, Route Transfers, Bank Payouts, Refunds, and GST lines) in under **2 milliseconds** — over **65,000 records/second** throughput.*
+  > *It identified **4 flagged exceptions** representing unresolved financial exposure."*
+- Point to the **Cash Float & Liquidity Widget**:
+  > *"We distinguish Razorpay Gateway Fees $\ne$ Route Transfer Fees $\ne$ Marketplace Commission $\ne$ Vendor Share. We track unrecovered vendor reversal float and compute the safe T+2 settlement buffer to disburse."*
 
 ---
 
-## ⏱️ Minute 2:00 - 3:15 | The Hero Investigation: Refund Post-Payout
+## ⏱️ Minute 2:00 - 3:15 | The Hero Investigation: Reversal Discrepancy
 - In the Ledger Table, click **Inspect** on `ord_0010`.
-- Open the Investigation Drawer:
-  > *"Look at the multi-entity timeline DAG: Order placed $\to$ Payment captured $\to$ ₹9,000 Payout settled to vendor $\to$ Customer refunded ₹10,000 with ₹0 clawback recorded.*
+- Open the **Investigation Workspace Drawer**:
+  > *"Look at the multi-entity financial timeline:*
+  > 1. *Customer payment captured: ₹12,500 (`pay_0010`)*
+  > 2. *Vendor Route transfer settled: ₹11,250 (`trf_0010`)*
+  > 3. *Customer refunded: ₹12,500 (`rfnd_0010`)*
+  > 4. *Recorded Route reversal: ₹10,750 (`rfr_0010`)*
   > 
-  > *Our AI Agent did NOT guess the numbers. It called scoped read-only tools (`get_order`, `get_payment`, `calculate_expected_state`), cited **POLICY_SEC_4_2_CLAWBACK_MANDATORY**, and formulated a safe Debit Adjustment proposal."*
+  > *Expected reversal per configured marketplace policy was ₹11,250, leaving a **₹500.00 unreconciled financial exposure**.*
+  > 
+  > *Our ReAct AI Investigator called 5 scoped read-only tools (`get_order`, `get_payment`, `get_splits_and_payouts`, `get_refunds`, `calculate_expected_state`), cited **POLICY_SEC_4_2_REVERSAL_MANDATORY**, and formulated a compliant ₹500 double-entry adjustment note."*
 
 ---
 
-## ⏱️ Minute 3:15 - 4:00 | Human Approval & Verification Proof
-- Click **"Approve & Execute Correction"**.
-- Confetti fires and status turns to **`VERIFIED RESOLVED (₹0.00)`**:
-  > *"The action was posted to the mock double-entry ledger. But more importantly: our engine immediately re-ran deterministic reconciliation on this transaction to prove that the financial delta collapsed to exactly **₹0.00**."*
+## ⏱️ Minute 3:15 - 4:00 | Human Approval & Mathematical Verification
+- Click **"Approve & Simulate Correction"**.
+- Confetti fires and status turns to **`VERIFIED ₹0.00`**:
+  > *"The correction was recorded in our immutable audit journal. But crucially, our engine immediately re-ran deterministic reconciliation on this transaction to mathematically prove that the residual delta collapsed to exactly **₹0.00**."*
 
 ---
 
-## ⏱️ Minute 4:00 - 4:40 | Live Chaos Injection ("Break the Ledger")
-- Click **"Break the Ledger (Chaos)"**.
-- Select **"Late Refund on Settled Vendor"** for ₹14,500 on `vend_014` and click **"Inject Discrepancy Live"**.
-  > *"Let's test live chaos. We just injected a late refund on a settled transaction. The dashboard instantly re-reconciled, flagged the new cash leakage, and traced the live UTR."*
+## ⏱️ Minute 4:00 - 4:40 | Live Chaos Scenario Simulator ("Break the Ledger")
+- Click **"Chaos Lab"** in the sidebar.
+- Select **"Late Refund on Settled Vendor"** and click **"Inject Discrepancy Live"**.
+  > *"Let's test live chaos. We inject an unlinked settlement drift. The dashboard instantly re-reconciles, flags the new cash leakage, and traces the live UTR across the Route DAG."*
 
 ---
 
-## ⏱️ Minute 4:40 - 5:00 | Benchmark Report & Honest Ambiguity
-- Click **"Ground Truth Benchmark"**.
+## ⏱️ Minute 4:40 - 5:00 | Ground Truth Benchmark & Honest Ambiguity
+- Click **"Benchmark Report"** in the sidebar.
 - Display the Confusion Matrix:
-  > *"We evaluated our system against an isolated hidden ground-truth dataset:*
+  > *"We benchmarked our engine against an isolated hidden ground-truth dataset:*
   > - **100% Precision** (Zero false positives)
-  > - **100% Recall**
+  > - **100% Recall** (All genuine anomalies detected)
   > - **100% Monetary Exposure Accuracy**
-  > - And for unmapped vendor contract tiers, our agent safely routes to **`HUMAN REVIEW`** rather than hallucinating accounting policies.*
+  > - And for unmapped vendor contracts, our agent safely routes to **`HUMAN REVIEW`** rather than hallucinating accounting policies.*
   > 
   > *Settlement Controller delivers throughput, measured accuracy, and a verified closed loop. Thank you."*
