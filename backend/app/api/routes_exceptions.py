@@ -12,7 +12,7 @@ def list_exceptions(
     vendor_id: Optional[str] = None
 ):
     if not state.exceptions:
-        state.initialize_and_run(count=500)
+        state.initialize_and_run(count=75)
 
     results = list(state.exceptions.values())
 
@@ -33,7 +33,7 @@ def list_exceptions(
 @router.get("/{exception_id}")
 def get_exception_detail(exception_id: str):
     if not state.exceptions:
-        state.initialize_and_run(count=500)
+        state.initialize_and_run(count=75)
 
     exc = state.exceptions.get(exception_id)
     if not exc:

@@ -7,7 +7,7 @@ router = APIRouter(prefix="/api/benchmark", tags=["Benchmark & Evaluation"])
 @router.get("/report")
 def get_benchmark_report():
     if not state.last_run_result:
-        state.initialize_and_run(count=500)
+        state.initialize_and_run(count=75)
 
     res = state.last_run_result
     report = state.evaluator.evaluate_run(

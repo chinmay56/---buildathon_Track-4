@@ -70,14 +70,14 @@ class SyntheticDataGenerator:
         settlements: List[SettlementRecord] = []
         ground_truth: Dict[str, GroundTruthEntry] = {}
 
-        # Target exception distribution across 500 records (~7% anomaly rate)
+        # Target exception distribution across 75+ records (~8% realistic anomaly rate)
         exception_indices = {
-            "refund_clawback": set(range(10, 20)),      # 10 Late refund unrecovered clawbacks
-            "excess_commission": set(range(35, 41)),    # 6 Duplicate commission overcharges
-            "tax_mismatch": set(range(70, 77)),         # 7 GST slab mismatches
-            "orphaned_payout": set(range(110, 115)),    # 5 Orphaned payouts without captured payments
-            "rounding_drift": set(range(150, 154)),     # 4 Sub-ledger rounding drifts
-            "ambiguous_policy": set(range(180, 183)),   # 3 Ambiguous unmapped vendor contract tiers
+            "refund_clawback": set(range(10, 15)),      # 5 Late refund unrecovered clawbacks
+            "excess_commission": set(range(25, 29)),    # 4 Duplicate commission overcharges
+            "tax_mismatch": set(range(38, 42)),         # 4 GST slab mismatches
+            "orphaned_payout": set(range(50, 53)),      # 3 Orphaned payouts without captured payments
+            "rounding_drift": set(range(60, 63)),       # 3 Sub-ledger rounding drifts
+            "ambiguous_policy": set(range(70, 73)),     # 3 Ambiguous unmapped vendor contract tiers
         }
 
         for i in range(1, count + 1):

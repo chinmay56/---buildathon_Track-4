@@ -12,7 +12,7 @@ def run_ai_investigation(
     user: AuthUser = Depends(require_permission("investigate_ai"))
 ):
     if not state.exceptions:
-        state.initialize_and_run(count=500)
+        state.initialize_and_run(count=75)
 
     exc = state.exceptions.get(exception_id)
     if not exc:
@@ -40,7 +40,7 @@ def approve_correction(
     user: AuthUser = Depends(require_permission("approve_corrections"))
 ):
     if not state.exceptions:
-        state.initialize_and_run(count=500)
+        state.initialize_and_run(count=75)
 
     exc = state.exceptions.get(exception_id)
     if not exc:
