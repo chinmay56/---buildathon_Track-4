@@ -8,7 +8,6 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg?style=flat&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E.svg?style=flat&logo=supabase)](https://supabase.com)
-[![Precision](https://img.shields.io/badge/Precision-100.0%25-brightgreen.svg)]()
 [![Throughput](https://img.shields.io/badge/Throughput-48%2C000%2B%20rec%2Fsec-blue.svg)]()
 [![Pytest](https://img.shields.io/badge/Pytest-18%2F18%20Passed-success.svg)]()
 
@@ -228,12 +227,12 @@ In modern multi-vendor marketplaces (Swiggy, Flipkart, Amazon India), funds flow
 | Time | Screen | What to Show |
 |---|---|---|
 | **0:00–0:30** | Settlement Ledger | 75-record multi-vendor batch loaded. Click **Reconcile**. |
-| **0:30–1:00** | KPI Overview | 53 matched, 22 exceptions, **100% precision**, **48,000+ rec/sec**, total exposure. |
+| **0:30–1:00** | KPI Overview | 53 matched, 22 exceptions, **48,000+ rec/sec**, total exposure. |
 | **1:00–2:30** | Hero Exception | Open `ord_0010`. Show transaction timeline, expected vs actual amounts. |
 | **2:30–3:30** | AI Investigate | Run investigation — show tool calls, policy citation, proposed action. Click **Approve**. Show status → `VERIFIED_RESOLVED ₹0.00`. |
 | **3:30–4:00** | Human Review | Open `ord_0013`. Show AI refusing to guess on ambiguous vendor tier. |
 | **4:00–4:30** | Cash & Copilot | Show live clawback exposure, float risk %. Ask copilot a follow-up question. |
-| **4:30–5:00** | Tests & Benchmark | Show `18/18 pytest passing`. Precision 100%, Recall 100%, F1 1.000. |
+| **4:30–5:00** | Tests & Benchmark | Show `18/18 pytest passing`. |
 
 ---
 
