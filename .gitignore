@@ -60,3 +60,8 @@ dist-ssr/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Office / build artifacts
+*.docx
+*.xlsx
+*.pdf

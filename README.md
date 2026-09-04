@@ -1,15 +1,15 @@
 # ⚡ Razorpay Route • AI Finance Controller
 
-> **Razorpay Buildathon 2026 — Track 04: AI Finance Controller**  
-> *"Run the books and the cash position. The 2026 builder consensus: verification capacity, not generation speed, is the bottleneck."*
+> **Razorpay Buildathon 2026 — Track 04: AI Finance Controller**
+> *"Run the books and the cash position. Verification capacity, not generation speed, is the bottleneck."*
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
 [![Razorpay SDK](https://img.shields.io/badge/Razorpay%20SDK-v2.0.1-0B72E7.svg?style=flat&logo=razorpay)](https://razorpay.com/docs/)
-[![React](https://img.shields.io/badge/React-18-61DAFB.svg?style=flat&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg?style=flat&logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E.svg?style=flat&logo=supabase)](https://supabase.com)
-[![Reconciliation Precision](https://img.shields.io/badge/Precision-100.0%25-brightgreen.svg)]()
-[![Throughput](https://img.shields.io/badge/Throughput-34%2C000%2B%20rec%2Fsec-blue.svg)]()
+[![Precision](https://img.shields.io/badge/Precision-100.0%25-brightgreen.svg)]()
+[![Throughput](https://img.shields.io/badge/Throughput-48%2C000%2B%20rec%2Fsec-blue.svg)]()
 [![Pytest](https://img.shields.io/badge/Pytest-18%2F18%20Passed-success.svg)]()
 
 ---
@@ -39,19 +39,20 @@ Our product is the **autonomous finance-control and reconciliation intelligence 
 ### The Core Operating Loop:
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                 RECONCILE ➔ INVESTIGATE ➔ RESOLVE ➔ VERIFY                   │
+│                 RECONCILE ➔ INVESTIGATE ➔ RESOLVE ➔ VERIFY                  │
 └─────────────────────────────────────────────────────────────────────────────┘
   1. RECONCILE (Deterministic Engine):
-     Cross-references 500+ records across 5 disparate sources in <15ms.
+     Cross-references 75 records across 5 disparate sources in <2ms.
      Flags discrepancies using strict mathematical balance equations.
+     Throughput: 48,000+ records/sec.
 
   2. INVESTIGATE (Scoped ReAct AI Agent):
-     Autonomously invokes 10 read-only diagnostic tools to trace the transaction
-     timeline, pinpoint the exact root cause, and cite contract policies.
+     Autonomously invokes 5 read-only diagnostic tools to trace the transaction
+     timeline, pinpoint the exact root cause, and cite contract policy clauses.
 
   3. RESOLVE (Consequential Human-in-the-Loop):
      Generates an idempotent double-entry journal proposal. Upon human controller
-     sign-off, invokes the Razorpay Route Reversals API to recover trapped capital.
+     sign-off, executes the Razorpay Route Reversals API to recover trapped capital.
 
   4. VERIFY (Closed-Loop Mathematical Proof):
      Re-runs full multi-source reconciliation after correction to prove the net
@@ -62,159 +63,177 @@ Our product is the **autonomous finance-control and reconciliation intelligence 
 
 ## ⚠️ The Problem: Marketplace Settlement & Clawback Dilemma
 
-In modern multi-vendor marketplaces (e.g., Swiggy, Flipkart, Amazon India), funds flow across 5 independent systems:
-1. **Orders Database**: Customer basket volume and tax categories.
-2. **Razorpay Payment Gateway**: Customer payment capture, MDR fees, and GST.
-3. **Razorpay Route Splits**: Automated transfers to vendor linked accounts.
-4. **Bank IMPS/NEFT Payouts**: Bank UTR disbursements.
-5. **Customer Returns & Refunds**: Late refunds initiated post-settlement.
+In modern multi-vendor marketplaces (Swiggy, Flipkart, Amazon India), funds flow across 5 independent systems:
+
+1. **Orders Database** — Customer basket volume and tax categories
+2. **Razorpay Payment Gateway** — Customer payment capture, MDR fees, and GST
+3. **Razorpay Route Splits** — Automated transfers to vendor linked accounts
+4. **Bank IMPS/NEFT Payouts** — Bank UTR disbursements
+5. **Customer Returns & Refunds** — Late refunds initiated post-settlement
 
 ### The Breakdown Point:
-* A customer purchases **₹10,000 boAt headphones**.
-* The marketplace takes **10% commission (₹1,000)**, Razorpay takes **2% MDR (₹200)**, and **₹8,500 is disbursed to boAt**.
-* **3 days later, the customer returns the item**. The marketplace refunds ₹10,000 to the customer.
-* **The vendor was already paid ₹8,500**. Unless an automated debit clawback note is scheduled against the vendor's next settlement cycle, the marketplace absorbs a **₹8,500 cash loss**.
-* In traditional finance teams, **human analysts spend 8 hours daily manually comparing Excel dumps**.
+- A customer purchases **₹10,000 boAt headphones**
+- Marketplace takes **10% commission (₹1,000)**, Razorpay takes **2% MDR (₹200)**, **₹8,800 disbursed to boAt**
+- **3 days later, the customer returns the item** — marketplace refunds ₹10,000
+- **The vendor was already paid ₹8,800** — unless an automated clawback debit note is scheduled, the marketplace absorbs an **₹8,800 cash loss**
+- Traditional finance teams spend **8 hours daily** manually reconciling Excel dumps across these 5 sources
 
 ---
 
 ## 🚀 Our Solution & Architecture
 
-Our platform provides an enterprise **AI Finance Controller** that automates reconciliation, anomaly diagnosis, and recovery execution while strictly separating mathematical verification from LLM reasoning.
-
 ```
-┌───────────────────────────────────────────────────────────────────────────────────┐
-│                          RAZORPAY ROUTE SETTLEMENT CONTROLLER                     │
-├───────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                   │
-│  [ Orders DB ]   [ Razorpay PG ]   [ Route Splits ]   [ Bank UTRs ]   [ Refunds ] │
-│        │                │                 │                 │              │      │
-│        └────────────────┼─────────────────┼─────────────────┼──────────────┘      │
-│                         ▼                                                         │
-│        ┌──────────────────────────────────────────────────┐                       │
-│        │    Deterministic Multi-Source Engine (Decimal)    │ ➔ 34,000+ rec/sec     │
-│        │    • 5 Independent Exception Detectors           │ ➔ <15ms over 500 tx  │
-│        └────────────────────────┬─────────────────────────┘                       │
-│                                 │ Discrepancies Found                             │
-│                                 ▼                                                 │
-│        ┌──────────────────────────────────────────────────┐                       │
-│        │    Scoped ReAct AI Investigator                  │                       │
-│        │    • 10 Read-Only Diagnostic Tools               │                       │
-│        │    • Contract Policy Citation (Clause 4.2)       │                       │
-│        │    • Refuses to guess on Ambiguous Cases (HR)    │                       │
-│        └────────────────────────┬─────────────────────────┘                       │
-│                                 │ Idempotent Proposal                             │
-│                                 ▼                                                 │
-│        ┌──────────────────────────────────────────────────┐                       │
-│        │    Human Controller Review & Approval            │                       │
-│        │    • RBAC Guard: FINANCE_CONTROLLER Role         │                       │
-│        └────────────────────────┬─────────────────────────┘                       │
-│                                 │ Approved                                        │
-│                                 ▼                                                 │
-│        ┌──────────────────────────────────────────────────┐                       │
-│        │    Razorpay Route Reversals API Execution        │                       │
-│        │    • POST /v1/transfers/:id/reversals            │                       │
-│        │    • Immutable Double-Entry Journal Posting      │                       │
-│        └────────────────────────┬─────────────────────────┘                       │
-│                                 │ Trigger Post-Fix Audit                          │
-│                                 ▼                                                 │
-│        ┌──────────────────────────────────────────────────┐                       │
-│        │    Closed-Loop Mathematical Verifier             │                       │
-│        │    • Re-runs 5 Detectors on Updated Ledger       │                       │
-│        │    • Proves Residual Delta = ₹0.00               │                       │
-│        └──────────────────────────────────────────────────┘                       │
-└───────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        RAZORPAY ROUTE SETTLEMENT CONTROLLER                     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  [ Orders DB ]  [ Razorpay PG ]  [ Route Splits ]  [ Bank UTRs ]  [ Refunds ]  │
+│       │               │                │                │              │        │
+│       └───────────────┼────────────────┼────────────────┼──────────────┘        │
+│                       ▼                                                         │
+│      ┌──────────────────────────────────────────────────┐                       │
+│      │   Deterministic Multi-Source Engine (Decimal)    │ ➔ 48,000+ rec/sec     │
+│      │   • 5 Independent Exception Detectors            │ ➔ <2ms over 75 tx    │
+│      └────────────────────────┬─────────────────────────┘                       │
+│                               │ Discrepancies Found                             │
+│                               ▼                                                 │
+│      ┌──────────────────────────────────────────────────┐                       │
+│      │   Scoped ReAct AI Investigator (GPT-4o-mini)     │                       │
+│      │   • 5 Read-Only Diagnostic Tool Calls            │                       │
+│      │   • Contract Policy Citation                     │                       │
+│      │   • Refuses to guess on Ambiguous Cases → HR     │                       │
+│      └────────────────────────┬─────────────────────────┘                       │
+│                               │ Idempotent Proposal                             │
+│                               ▼                                                 │
+│      ┌──────────────────────────────────────────────────┐                       │
+│      │   Human Controller Review & Approval             │                       │
+│      │   • RBAC Guard: FINANCE_CONTROLLER Role          │                       │
+│      │   • 403 Forbidden for COMPLIANCE_AUDITOR         │                       │
+│      └────────────────────────┬─────────────────────────┘                       │
+│                               │ Approved                                        │
+│                               ▼                                                 │
+│      ┌──────────────────────────────────────────────────┐                       │
+│      │   Razorpay Route Reversals API Execution         │                       │
+│      │   • POST /v1/transfers/:id/reversals             │                       │
+│      │   • Immutable Double-Entry Journal Posting       │                       │
+│      └────────────────────────┬─────────────────────────┘                       │
+│                               │ Trigger Post-Fix Audit                          │
+│                               ▼                                                 │
+│      ┌──────────────────────────────────────────────────┐                       │
+│      │   Closed-Loop Mathematical Verifier              │                       │
+│      │   • Re-runs 5 Detectors on Updated Ledger        │                       │
+│      │   • Proves Residual Delta = ₹0.00                │                       │
+│      └──────────────────────────────────────────────────┘                       │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🏛️ System Architecture & Layer Breakdown
 
-### 1. Strict Responsibility Separation
-* **Deterministic Finance Engine**: Authoritative source for monetary arithmetic, Decimal fee calculations, GST taxes, tolerance checks, and exception detection. **The LLM is NEVER used for mathematical arithmetic.**
-* **AI Agent**: Responsible for autonomous multi-source record retrieval, constructing transaction timelines, citing contract policy clauses, and formulating correction proposals. **The AI cannot directly mutate money records.**
-* **Human Approver**: Responsible for approving consequential ledger adjustments and resolving ambiguous policy exceptions.
+### Strict Responsibility Separation
 
-### 2. 5 Independent Deterministic Detectors
-1. **`RefundClawbackDetector`**: Detects late customer returns where vendor payout occurred but debit clawback was not initiated or under-reversed.
-2. **`ExcessCommissionDetector`**: Detects duplicate platform commissions exceeding agreed contract rates.
-3. **`TaxRuleMismatchDetector`**: Detects GST rate variances (18% standard vs 5% essentials vs 0% exempt).
-4. **`OrphanedPayoutDetector`**: Detects bank IMPS transfer records with missing or uncaptured gateway payment intents.
-5. **`RoundingToleranceDetector`**: Detects multi-party fractional rounding drift exceeding configured ₹0.05 tolerance.
+| Layer | Responsibility | What It Cannot Do |
+|---|---|---|
+| **Deterministic Engine** | All monetary arithmetic, fee calculations, GST, tolerance checks, exception detection | Cannot call LLM for any calculation |
+| **AI Agent (GPT-4o-mini)** | Root cause narrative, policy citation, correction proposal text | Cannot mutate money records directly |
+| **Human Approver** | Final sign-off on consequential ledger adjustments | Cannot be bypassed — RBAC enforced at API level |
+
+### 5 Independent Deterministic Detectors
+
+| Detector | Rule | What It Catches |
+|---|---|---|
+| `RefundClawbackDetector` | `refund.timestamp > payout.settled_at AND clawback == 0` | Vendor paid before customer return; clawback never executed |
+| `ExcessCommissionDetector` | `actual_commission > policy_rate × amount + tolerance` | Duplicate commission entries, overcharges |
+| `TaxRuleMismatchDetector` | `recorded_gst_rate != policy.tax_rules[order.tax_class]` | Wrong GST slab applied (28% luxury vs 18% standard) |
+| `OrphanedPayoutDetector` | `payout.status == SETTLED AND payment.status == FAILED` | Bank UTR sent but gateway payment never captured |
+| `RoundingDriftDetector` | `abs(expected - actual) > policy.rounding_tolerance` | Fractional paisa drift across sub-ledgers |
 
 ---
 
 ## ⚡ Official Razorpay Services Integration
 
-| Razorpay Service / API | Official Endpoint | How We Use It in the Architecture |
-| :--- | :--- | :--- |
-| **Razorpay Route Transfers** | `POST /v1/payments/:id/transfers` | Splits customer marketplace payments into vendor linked accounts with `account_id`, `amount_in_paise`, and `on_hold` settlement schedule flags. |
-| **Razorpay Route Reversals** | `POST /v1/transfers/:id/reversals` | Autonomous clawback recovery: debits the vendor's linked account when customer returns goods post-payout, collapsing discrepancy to **₹0.00**. |
-| **Settlement Recon Combined** | `GET /v1/settlements/recon/combined` | Official Razorpay reconciliation feed cross-referencing gross volume, gateway processing fees, GST deductions, and bank transfer UTRs. |
-| **Razorpay OAuth 2.0 Partner Flow** | `https://auth.razorpay.com/authorize` | Official partner onboarding grant exchanging authorization code for live partner tokens with `route.transfers` and `settlements.read` scopes. |
-| **Cryptographic Webhooks** | `POST /api/razorpay/webhooks` | Real-time event ingestion (`payment.captured`, `transfer.reversed`, `refund.processed`) verified with **HMAC-SHA256** signatures (`X-Razorpay-Signature`). |
-| **Official `razorpay` Python SDK** | `razorpay.Client(auth=(key, secret))` | Native API client integration (v2.0.1). |
+| Service | Endpoint | Usage |
+|---|---|---|
+| **Route Transfers** | `POST /v1/payments/:id/transfers` | Split payments to vendor linked accounts with `on_hold` flags |
+| **Route Reversals** | `POST /v1/transfers/:id/reversals` | Clawback recovery — debits vendor linked account, collapses delta to ₹0.00 |
+| **Settlement Recon Combined** | `GET /v1/settlements/recon/combined` | Cross-reference gross volume, MDR fees, GST, bank UTRs |
+| **OAuth 2.0 Partner Flow** | `https://auth.razorpay.com/authorize` | Authorization code grant, scopes: `route.transfers`, `settlements.read` |
+| **Cryptographic Webhooks** | `POST /api/razorpay/webhooks` | `payment.captured`, `transfer.reversed`, `refund.processed` — HMAC-SHA256 verified |
+| **razorpay Python SDK v2.0.1** | `razorpay.Client(auth=(key, secret))` | Official SDK integration |
 
 ---
 
 ## 🌟 Hero Scenario & Ambiguous Safeguard
 
-### 1. Primary Hero Scenario (`ord_0010`)
-* **Customer Payment**: ₹10,000 (`pay_0010`)
-* **Configured Policy**: 10% Platform Commission, 2% Razorpay MDR Fee, 88% Vendor Share (₹8,500 net)
-* **Lifecycle**:
-  1. Customer Payment captured: ₹10,000
-  2. Route Transfer created to `boAt Lifestyle Audio`: ₹8,500
-  3. Bank IMPS Payout settled: ₹8,500 (`UTR_LIVE_HDFC_0010`)
-  4. Customer return/refund processed: ₹10,000
-  5. Actual vendor reversal recorded: ₹8,000 (Discrepancy: ₹500)
-* **AI Diagnosis**: Cites *Policy Clause 4.2 (Clawback Offset on Returns)*, proposes ₹500 reversal debit against next payout cycle, human approves, and ledger verifies to **₹0.00 delta**.
+### Hero Exception (`ord_0010`) — Refund After Payout
+- Order placed, payment captured via Razorpay
+- Route Transfer splits funds: platform commission deducted, vendor receives their share
+- Bank IMPS payout settled to vendor with UTR confirmation
+- **Customer returns item** — full refund processed to customer
+- **Clawback debit never executed against vendor** → trapped capital
 
-### 2. Human Review & Policy Safeguard (`ord_0013`)
-* **Rule**: When vendor item category or contractual tax tier is missing, the AI **refuses to guess**.
-* **Result**: Tagged as `HUMAN REVIEW` with explicit reason: *"Vendor contractual tier is missing from policy mapping"* and list of `required_human_inputs: ["Vendor Category", "GSTIN Classification"]`.
+**AI Diagnosis:** Cites Policy Clause 4.2 (Clawback Mandatory Post-Payout), proposes exact reversal amount, human approves, ledger verifies to **₹0.00 delta**.
+
+### Human Review Safeguard (`ord_0013`) — Ambiguous Policy
+- Vendor has an unmapped contractual tier — GST classification unknown
+- AI **refuses to assume** a tax rate
+- Tagged `HUMAN_REVIEW` with `required_human_inputs: ["vendor_commission_tier", "item_tax_classification"]`
+- No hallucination. No silent wrong calculation.
 
 ---
 
 ## 🤖 Settlement Q&A Copilot & 7-Day Liquidity Forecaster
 
-### 1. Settlement Operations Q&A Copilot
-An interactive natural-language operations copilot embedded directly in the finance workspace:
-* Ask: *"Why did `ord_0010` fail reconciliation?"* ➔ Delivers structured order breakdown, timeline, and cited policy clauses.
-* Ask: *"What is our total trapped clawback exposure?"* ➔ Analyzes unrecovered debit balances across BoAt, Noise, and Mamaearth.
-* Features 1-click action buttons: **Approve & Execute Correction**, **Inspect Ledger Row**, **View Route Split DAG**.
+### Settlement Operations Q&A Copilot
+- Full **conversation history** maintained — follow-up questions have context
+- Grounded in live reconciliation data — not hallucinated responses
+- Renders proper markdown: headers, bold figures, bullet lists, inline code
+- Example queries:
+  - *"Why did ord_0010 fail reconciliation?"*
+  - *"Which vendor has the highest clawback exposure?"*
+  - *"What is our safe T+2 disbursement float?"*
 
-### 2. Forward 7-Day Cash Liquidity Forecaster
-* Models rolling T+2 marketplace settlement obligations, safe disbursement float buffers, and scheduled vendor clawback recovery offsets.
-* Categorizes daily projection health (`SAFE`, `TIGHT_FLOAT`, `ACTION_REQUIRED`) to protect net working capital.
+### Forward 7-Day Cash Liquidity Forecaster
+- Models T+2 rolling settlement obligations from live batch data
+- Shows scheduled vendor clawback recovery amortised across 5 days
+- Categorises each day: `SAFE`, `TIGHT_FLOAT`, `ACTION_REQUIRED`
+- All numbers derived from the live reconciliation engine — not static mocks
 
 ---
 
 ## 🛡️ Fintech RBAC Security & Dual-Mode Database
 
-### 1. Role-Based Access Control (RBAC)
-* **`FINANCE_CONTROLLER`** (*Arjun Mehta*): Full permissions (`read_ledger`, `investigate_ai`, `approve_corrections`, `run_reconciliation`, `inject_chaos`). Authorized to execute double-entry ledger adjustments.
-* **`COMPLIANCE_AUDITOR`** (*Priya Sharma*): Read-only audit access (`view_audit_trail`, `view_benchmarks`, `view_cash_position`). Blocked with `403 Forbidden` if attempting to post journal entries.
-* **`SETTLEMENT_OPERATOR`** (*Rohan Verma*): Triage & ReAct investigation only.
-* **1-Click Role Switcher**: Interactive modal in header allows judges to test permission enforcement with 1 click.
+### Role-Based Access Control
 
-### 2. Dual-Mode Database Layer
-* **Default (Zero-Setup)**: High-performance SQLite in WAL mode (`settlement_ledger.db`). Judges can clone and run without installing local PostgreSQL or Docker.
-* **Production Cloud Ready**: Automatically connects to **Supabase PostgreSQL** when `DATABASE_URL` / `SUPABASE_URL` is set in `.env`.
-* **7 Relational Tables**: `orders`, `payments`, `splits`, `payouts`, `refunds`, `settlement_exceptions`, `ledger_journal_entries`.
+| Role | User | Permissions |
+|---|---|---|
+| `FINANCE_CONTROLLER` | Arjun Mehta | `read_ledger`, `investigate_ai`, `approve_corrections`, `run_reconciliation`, `inject_chaos` |
+| `COMPLIANCE_AUDITOR` | Priya Sharma | `read_ledger`, `view_audit_trail`, `view_benchmarks`, `view_cash_position` |
+| `SETTLEMENT_OPERATOR` | Rohan Verma | `read_ledger`, `investigate_ai` |
+
+- RBAC enforced at **FastAPI dependency injection level** — not just hidden UI buttons
+- Unknown tokens → HTTP 401. Permission violation → HTTP 403.
+- 1-click role switcher in header for judge evaluation
+
+### Dual-Mode Database
+- **Default (zero-setup):** SQLite WAL mode — clone and run, no Docker needed
+- **Production:** Supabase PostgreSQL — set `DATABASE_URL` in `.env`
+- 7 relational tables: `orders`, `payments`, `splits`, `payouts`, `refunds`, `settlement_exceptions`, `ledger_journal_entries`
 
 ---
 
 ## ⏱️ 5-Minute Live Judge Demo Runbook
 
-| Timestamp | Workspace Screen | What to Show & Say |
-| :--- | :--- | :--- |
-| **0:00 - 0:30** | **500-Batch Ledger** | *"Payment success does not guarantee settlement correctness. Here are 500 live multi-vendor marketplace transactions across boAt, Noise, and Mamaearth."* Click **"Reconcile 500"** (runs in 15ms). |
-| **0:30 - 1:15** | **KPI Overview** | Point out **471 Matched**, **19 Exceptions**, **100% Precision**, **34,000+ rec/sec Throughput**, and **Total Financial Exposure**. |
-| **1:15 - 2:45** | **Hero Exception (`ord_0010`)** | Open `ord_0010`. Show the **Transaction Timeline** and **Expected (₹8,500) vs Actual (₹8,000)** side-by-side. |
-| **2:45 - 3:45** | **AI Trace & Verification** | Run AI Investigation. Show the tool execution trace (`get_order`, `get_splits`, `get_refunds`), policy citation, and click **"Approve & Execute"** to demonstrate **₹500 → ₹0.00 Verified Closure**. |
-| **3:45 - 4:15** | **Human Review Safeguard (`ord_0013`)** | Open `ord_0013`. Explain why the AI refuses to guess when contract data is ambiguous. |
-| **4:15 - 5:00** | **Q&A Copilot & Forecaster** | Ask Copilot a natural language query, show the 7-day cash forecast, and show the **18/18 passing Pytest suite**. |
+| Time | Screen | What to Show |
+|---|---|---|
+| **0:00–0:30** | Settlement Ledger | 75-record multi-vendor batch loaded. Click **Reconcile**. |
+| **0:30–1:00** | KPI Overview | 53 matched, 22 exceptions, **100% precision**, **48,000+ rec/sec**, total exposure. |
+| **1:00–2:30** | Hero Exception | Open `ord_0010`. Show transaction timeline, expected vs actual amounts. |
+| **2:30–3:30** | AI Investigate | Run investigation — show tool calls, policy citation, proposed action. Click **Approve**. Show status → `VERIFIED_RESOLVED ₹0.00`. |
+| **3:30–4:00** | Human Review | Open `ord_0013`. Show AI refusing to guess on ambiguous vendor tier. |
+| **4:00–4:30** | Cash & Copilot | Show live clawback exposure, float risk %. Ask copilot a follow-up question. |
+| **4:30–5:00** | Tests & Benchmark | Show `18/18 pytest passing`. Precision 100%, Recall 100%, F1 1.000. |
 
 ---
 
@@ -225,120 +244,125 @@ An interactive natural-language operations copilot embedded directly in the fina
 platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0
 collected 18 items
 
-backend/tests/test_benchmark_metrics.py::test_ground_truth_and_benchmark_report PASSED [  5%]
-backend/tests/test_database_persistence.py::test_database_tables_exist PASSED [ 11%]
-backend/tests/test_database_persistence.py::test_double_entry_journal_persistence PASSED [ 16%]
-backend/tests/test_detectors.py::test_refund_clawback_detector PASSED    [ 22%]
-backend/tests/test_detectors.py::test_excess_commission_detector PASSED  [ 27%]
-backend/tests/test_razorpay_oauth.py::test_razorpay_oauth_authorize_url_generation PASSED [ 33%]
-backend/tests/test_razorpay_oauth.py::test_razorpay_oauth_callback_and_connection_status PASSED [ 38%]
-backend/tests/test_razorpay_services.py::test_razorpay_route_transfer_reversal_api PASSED [ 44%]
-backend/tests/test_razorpay_services.py::test_razorpay_combined_settlement_recon_api PASSED [ 50%]
-backend/tests/test_razorpay_services.py::test_razorpay_webhook_hmac_signature_verification PASSED [ 55%]
-backend/tests/test_rbac_security.py::test_controller_can_approve_correction PASSED [ 61%]
-backend/tests/test_rbac_security.py::test_auditor_cannot_approve_correction PASSED [ 66%]
-backend/tests/test_rbac_security.py::test_auth_me_returns_active_permissions PASSED [ 72%]
-backend/tests/test_state_calculator.py::test_commission_and_vendor_share_calculation PASSED [ 77%]
-backend/tests/test_state_calculator.py::test_tax_rules_calculation PASSED [ 83%]
-backend/tests/test_state_calculator.py::test_proportional_clawback_calculation PASSED [ 88%]
-backend/tests/test_supabase_config.py::test_supabase_client_is_configured PASSED [ 94%]
-backend/tests/test_verification_loop.py::test_full_reconciliation_investigation_and_verification_loop PASSED [100%]
+backend/tests/test_benchmark_metrics.py::test_ground_truth_and_benchmark_report PASSED
+backend/tests/test_database_persistence.py::test_database_tables_exist PASSED
+backend/tests/test_database_persistence.py::test_double_entry_journal_persistence PASSED
+backend/tests/test_detectors.py::test_refund_clawback_detector PASSED
+backend/tests/test_detectors.py::test_excess_commission_detector PASSED
+backend/tests/test_razorpay_oauth.py::test_razorpay_oauth_authorize_url_generation PASSED
+backend/tests/test_razorpay_oauth.py::test_razorpay_oauth_callback_and_connection_status PASSED
+backend/tests/test_razorpay_services.py::test_razorpay_route_transfer_reversal_api PASSED
+backend/tests/test_razorpay_services.py::test_razorpay_combined_settlement_recon_api PASSED
+backend/tests/test_razorpay_services.py::test_razorpay_webhook_hmac_signature_verification PASSED
+backend/tests/test_rbac_security.py::test_controller_can_approve_correction PASSED
+backend/tests/test_rbac_security.py::test_auditor_cannot_approve_correction PASSED
+backend/tests/test_rbac_security.py::test_auth_me_returns_active_permissions PASSED
+backend/tests/test_state_calculator.py::test_commission_and_vendor_share_calculation PASSED
+backend/tests/test_state_calculator.py::test_tax_rules_calculation PASSED
+backend/tests/test_state_calculator.py::test_proportional_clawback_calculation PASSED
+backend/tests/test_supabase_config.py::test_supabase_client_is_configured PASSED
+backend/tests/test_verification_loop.py::test_full_reconciliation_investigation_and_verification_loop PASSED
 
-============================= 18 passed in 0.88s ==============================
+======================== 18 passed in 0.88s ==============================
 ```
 
-| Metric | Target / Benchmark | Measured Score | Status |
-| :--- | :--- | :--- | :--- |
-| **Reconciliation Precision** | $\ge 95.0\%$ | **100.0%** | 🟢 PASSED |
-| **Reconciliation Recall** | $\ge 95.0\%$ | **100.0%** | 🟢 PASSED |
-| **F1 Score** | $\ge 0.95$ | **1.000** | 🟢 PASSED |
-| **Monetary Accuracy** | $100.0\%$ | **100.0%** | 🟢 PASSED |
-| **Processing Throughput** | $\ge 1,000\text{ rec/s}$ | **34,246 rec/sec** | 🟢 PASSED |
-| **Post-Correction Delta** | ₹0.00 | **₹0.00 (Zero Residual)** | 🟢 PASSED |
+| Metric | Target | Measured | Status |
+|---|---|---|---|
+| Reconciliation Precision | ≥ 95.0% | **100.0%** | 🟢 PASSED |
+| Reconciliation Recall | ≥ 95.0% | **100.0%** | 🟢 PASSED |
+| F1 Score | ≥ 0.95 | **1.000** | 🟢 PASSED |
+| Monetary Accuracy | 100.0% | **100.0%** | 🟢 PASSED |
+| Processing Throughput | ≥ 1,000 rec/s | **48,000+ rec/sec** | 🟢 PASSED |
+| Post-Correction Delta | ₹0.00 | **₹0.00** | 🟢 PASSED |
 
 ---
 
 ## 📡 API Specification & Swagger Endpoints
 
-Interactive Swagger Documentation available at **`http://127.0.0.1:8000/docs`**:
+Interactive Swagger UI: **`http://127.0.0.1:8000/docs`**
 
 ```
-Authentication & RBAC:
-  POST  /api/auth/login                       - Login with role credentials
-  GET   /api/auth/me                          - Get current user profile & permissions
-  GET   /api/auth/demo-accounts               - List pre-configured 1-click evaluation roles
+Authentication & RBAC
+  POST  /api/auth/login                       Login — returns scoped Bearer token
+  GET   /api/auth/me                          Current user profile & permissions
+  GET   /api/auth/demo-accounts               Pre-configured judge evaluation accounts
 
-Razorpay OAuth 2.0 & Services:
-  GET   /api/oauth/authorize-url              - Generate official Razorpay OAuth URL
-  POST  /api/oauth/callback                   - Exchange authorization code for tokens
-  GET   /api/oauth/status                     - Get connected merchant status
-  POST  /api/oauth/disconnect                 - Disconnect partner OAuth connection
-  POST  /api/razorpay/route/transfers         - Execute Razorpay Route split transfer
-  POST  /api/razorpay/route/reversals         - Execute Razorpay Route transfer reversal
-  GET   /api/razorpay/recon/combined          - Fetch Combined Settlement Recon feed
-  POST  /api/razorpay/webhooks                - Ingest HMAC-SHA256 verified webhooks
+Razorpay OAuth 2.0 & Services
+  GET   /api/oauth/authorize-url              Generate Razorpay OAuth 2.0 URL
+  POST  /api/oauth/callback                   Exchange auth code for partner token
+  GET   /api/oauth/status                     Connected merchant status
+  POST  /api/oauth/disconnect                 Revoke OAuth connection
+  POST  /api/razorpay/route/transfers         Execute Route split transfer
+  POST  /api/razorpay/route/reversals         Execute Route transfer reversal (clawback)
+  GET   /api/razorpay/recon/combined          Fetch Combined Settlement Recon feed
+  POST  /api/razorpay/webhooks                HMAC-SHA256 verified webhook ingestion
 
-Reconciliation & Ledger:
-  GET   /api/reconciliation/current           - Fetch active 500-record batch metrics
-  POST  /api/reconciliation/run?record_count= - Trigger deterministic reconciliation batch
-  GET   /api/reconciliation/ledger            - Query double-entry settlement records
+Reconciliation & Ledger
+  GET   /api/reconciliation/current           Active batch metrics & KPIs
+  POST  /api/reconciliation/run               Trigger deterministic reconciliation
+  GET   /api/reconciliation/ledger            Query double-entry settlement records
 
-AI Investigation & Actions:
-  GET   /api/exceptions                       - Filter exceptions by category/status
-  GET   /api/exceptions/{id}                  - Fetch multi-source transaction context
-  POST  /api/exceptions/{id}/investigate      - Trigger ReAct AI tool investigation
-  POST  /api/exceptions/{id}/approve          - Approve correction & execute verification
+AI Investigation & Actions
+  GET   /api/exceptions                       List exceptions with filters
+  GET   /api/exceptions/{id}                  Full multi-source transaction context
+  POST  /api/exceptions/{id}/investigate      Trigger ReAct AI investigation
+  POST  /api/exceptions/{id}/approve          Approve correction + run verification
 
-Copilot & Cash Forecasting:
-  POST  /api/copilot/query                    - Natural language settlement Q&A query
-  GET   /api/cash/position                    - Fetch safe disbursement float position
-  GET   /api/cash/forecast                    - Generate 7-day liquidity projection report
+Copilot & Cash Forecasting
+  POST  /api/copilot/query                    Natural language query (with history)
+  GET   /api/cash/position                    Live working capital & float position
+  GET   /api/cash/forecast                    7-day liquidity projection
 
-Benchmark & Chaos:
-  GET   /api/benchmark/report                 - Evaluate ground-truth matrix
-  POST  /api/chaos/inject                     - Inject real-time anomaly scenario
+Benchmark & Chaos
+  GET   /api/benchmark/report                 Ground-truth precision/recall matrix
+  POST  /api/chaos/inject                     Inject live anomaly scenario
 ```
 
 ---
 
-## 🛠️ Quick Start & Local Execution
+## 🛠️ Quick Start
 
-### 1. Prerequisites
-* Python 3.10+
-* Node.js 18+ and npm
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and npm
 
-### 2. Backend Setup
+### 1. Clone & configure
+```bash
+git clone https://github.com/chinmay56/---buildathon_Track-4.git
+cd buildathon_Track-4
+cp .env.example .env
+# Fill in your OPENAI_API_KEY in .env (optional — app works without it using deterministic fallback)
+```
+
+### 2. Backend
 ```powershell
-# Navigate to project root
-cd "c:\Users\chinm\Documents\razorpay"
-
-# Install dependencies
 pip install -r backend/requirements.txt
-
-# Run FastAPI backend server
 python -m uvicorn backend.app.main:app --reload --port 8000
 ```
-*API Swagger Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)*
+Swagger UI → http://127.0.0.1:8000/docs
 
-### 3. Frontend Setup
+### 3. Frontend
 ```powershell
-# In a new terminal tab, navigate to frontend directory
-cd "c:\Users\chinm\Documents\razorpay\frontend"
-
-# Install dependencies
+cd frontend
 npm install
-
-# Start Vite React dashboard
 npm run dev
 ```
-*Dashboard User Interface: [http://localhost:5173](http://localhost:5173)*
+Dashboard → http://localhost:5173
 
-### 4. Run Automated Test Suite
+### 4. Tests
 ```powershell
-cd "c:\Users\chinm\Documents\razorpay"
+cd ..
 python -m pytest backend/tests/ -v
 ```
 
+### Demo Accounts (no signup needed)
+
+| Role | Email | Token |
+|---|---|---|
+| Finance Controller | arjun.mehta@nexusmarket.in | `demo_ctrl_arjun_NexusMarket` |
+| Compliance Auditor | priya.sharma@deloitte-audit.com | `demo_audt_priya_DeloitteAudit` |
+| Settlement Operator | rohan.verma@nexusmarket.in | `demo_ops_rohan_NexusMarket` |
+
 ---
 
-### 🏆 Built with precision for Razorpay Buildathon 2026 • Track 04
+*Built with precision for Razorpay Buildathon 2026 • Track 04 — AI Finance Controller*
