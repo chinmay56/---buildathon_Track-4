@@ -3,8 +3,14 @@ Fintech Security & Role-Based Access Control (RBAC) Module for Razorpay Settleme
 
 Implements JWT Bearer Authentication, Permission Enforcers, and Audit Logging
 for financial ledger operations.
+
+NOTE (Demo mode): This app uses pre-configured demo accounts for hackathon evaluation.
+Tokens are opaque identifiers mapped to fixed demo users — NOT production JWTs.
+In a production system, tokens would be verified against a signing key.
 """
 
+import os
+import secrets
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status, Header
@@ -53,35 +59,66 @@ PRECONFIGURED_USERS = {
     )
 }
 
+# Stable demo token map — tokens are opaque random-looking strings, NOT role names.
+# Generated once at module load so they remain consistent within a server session.
+# In production these would be signed JWTs verified against a secret key.
+_DEMO_TOKENS: dict[str, str] = {
+    "lead_controller":  os.getenv("DEMO_TOKEN_CONTROLLER",  "demo_ctrl_arjun_NexusMarket"),
+    "senior_auditor":   os.getenv("DEMO_TOKEN_AUDITOR",     "demo_audt_priya_DeloitteAudit"),
+    "ops_associate":    os.getenv("DEMO_TOKEN_OPERATOR",    "demo_ops_rohan_NexusMarket"),
+}
+# Reverse map: token → user_key
+_TOKEN_TO_USER: dict[str, str] = {v: k for k, v in _DEMO_TOKENS.items()}
+
+
+def get_demo_tokens() -> dict[str, str]:
+    """Returns the active demo token map (user_key → token) for the login endpoint."""
+    return _DEMO_TOKENS
+
+
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
     x_user_role: Optional[str] = Header(default=None, alias="X-User-Role")
 ) -> AuthUser:
     """
-    Authenticates requests via Bearer Token or Role header (with preconfigured fallback for dev/demo).
+    Authenticates requests via Bearer Token.
+
+    Demo mode: tokens are stable opaque strings mapped to pre-configured users.
+    The X-User-Role header is accepted as a convenience during judge evaluation
+    (maps role string → demo user without needing the token).
+
+    An unrecognised token/role returns HTTP 401 — never silently promotes to admin.
     """
-    # 1. Check custom test role header
-    if x_user_role:
-        r_str = x_user_role.lower()
-        if "audit" in r_str:
-            return PRECONFIGURED_USERS["senior_auditor"]
-        elif "operat" in r_str or "ops" in r_str:
-            return PRECONFIGURED_USERS["ops_associate"]
-        elif "control" in r_str:
-            return PRECONFIGURED_USERS["lead_controller"]
-
-    # 2. Check Bearer token
+    # 1. Try Bearer token first (preferred)
     if credentials and credentials.credentials:
-        token = credentials.credentials.lower()
-        if "audit" in token:
-            return PRECONFIGURED_USERS["senior_auditor"]
-        elif "operat" in token or "ops" in token:
-            return PRECONFIGURED_USERS["ops_associate"]
-        elif "control" in token:
-            return PRECONFIGURED_USERS["lead_controller"]
+        token = credentials.credentials
+        user_key = _TOKEN_TO_USER.get(token)
+        if user_key:
+            return PRECONFIGURED_USERS[user_key]
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token. Use /api/auth/login to obtain a valid token."
+        )
 
-    # Default to Lead Controller for seamless testing
-    return PRECONFIGURED_USERS["lead_controller"]
+    # 2. Fallback: X-User-Role header (judge convenience only)
+    if x_user_role:
+        r = x_user_role.upper()
+        if "AUDIT" in r:
+            return PRECONFIGURED_USERS["senior_auditor"]
+        elif "OPERAT" in r or "OPS" in r:
+            return PRECONFIGURED_USERS["ops_associate"]
+        elif "CONTROL" in r or "FINANCE" in r:
+            return PRECONFIGURED_USERS["lead_controller"]
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Unrecognised X-User-Role value '{x_user_role}'. Valid roles: FINANCE_CONTROLLER, COMPLIANCE_AUDITOR, SETTLEMENT_OPERATOR."
+        )
+
+    # 3. No credentials provided at all
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required. Send 'Authorization: Bearer <token>' or 'X-User-Role' header."
+    )
 
 
 def require_permission(required_perm: str):

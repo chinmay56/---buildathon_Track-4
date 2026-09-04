@@ -28,6 +28,9 @@ class CopilotQueryRequest(BaseModel):
     message: str
     order_id: Optional[str] = None
     vendor_id: Optional[str] = None
+    # Conversation history from the frontend — enables context-aware follow-up answers.
+    # Each entry is {"role": "user"|"assistant", "content": "..."}
+    history: List[ChatMessage] = []
 
 
 class CopilotQueryResponse(BaseModel):
@@ -168,12 +171,23 @@ USER QUESTION:
     if OPENAI_API_KEY:
         try:
             client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+            # Build the messages array:
+            # 1. System prompt
+            # 2. Prior conversation turns (history) — enables context-aware follow-ups
+            # 3. Current user question (with grounded live context injected)
+            messages_payload = [{"role": "system", "content": system_prompt}]
+
+            # Replay prior turns without the live context (keeps token count low)
+            for turn in req.history[:-1]:  # exclude the last turn — it's the current question
+                messages_payload.append({"role": turn.role, "content": turn.content})
+
+            # Current question — inject the full live context here only
+            messages_payload.append({"role": "user", "content": user_prompt})
+
             completion = client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
+                messages=messages_payload,
                 temperature=0.2,
                 max_tokens=650
             )

@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,9 +18,8 @@ from backend.app.state import app_state
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize SQL database schema & seed 75-record batch
+    # Initialize SQL database schema — app_state seeds data in its own __init__
     init_db()
-    app_state.initialize_and_run(count=75)
     yield
 
 
@@ -30,13 +30,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for frontend
+# Allow requests only from the known frontend origins.
+# "allow_credentials=True" requires an explicit origin list — wildcard is not permitted.
+_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-User-Role"],
 )
 
 # Include Routers

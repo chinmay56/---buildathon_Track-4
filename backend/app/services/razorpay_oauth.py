@@ -5,12 +5,24 @@ Implements the official Razorpay Authorization Code Grant flow:
 1. Authorization URL Generation (https://auth.razorpay.com/authorize)
 2. Token Exchange (POST https://auth.razorpay.com/token)
 3. Token Refresh and Revocation
+
+Credentials are read from environment variables:
+  RAZORPAY_OAUTH_CLIENT_ID     — Partner client ID from Razorpay Dashboard
+  RAZORPAY_OAUTH_CLIENT_SECRET — Partner client secret from Razorpay Dashboard
+
+If absent, clearly-labelled demo values are used so the app starts without real
+credentials. The service starts in a DISCONNECTED state — judges must click
+"Connect via OAuth" to initiate the flow.
 """
 
+import os
 import time
 import urllib.parse
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
+
+_DEFAULT_CLIENT_ID     = "rzp_partner_DEMO_CLIENT_ID"
+_DEFAULT_CLIENT_SECRET = "rzp_partner_DEMO_CLIENT_SECRET"
 
 
 class RazorpayOAuthToken(BaseModel):
@@ -26,22 +38,18 @@ class RazorpayOAuthToken(BaseModel):
 class RazorpayOAuthService:
     def __init__(
         self,
-        client_id: str = "rzp_partner_client_nexus99",
-        client_secret: str = "rzp_secret_oauth_nexus99_live",
+        client_id: str = "",
+        client_secret: str = "",
         auth_base_url: str = "https://auth.razorpay.com"
     ):
-        self.client_id = client_id
-        self.client_secret = client_secret
+        # Prefer constructor args; fall back to env vars; then to demo placeholders.
+        self.client_id     = client_id     or os.getenv("RAZORPAY_OAUTH_CLIENT_ID",     _DEFAULT_CLIENT_ID)
+        self.client_secret = client_secret or os.getenv("RAZORPAY_OAUTH_CLIENT_SECRET", _DEFAULT_CLIENT_SECRET)
         self.auth_base_url = auth_base_url
-        self.active_connection: Optional[RazorpayOAuthToken] = RazorpayOAuthToken(
-            access_token="rzp_live_oauth_token_nexus99",
-            refresh_token="rzp_live_refresh_token_nexus99",
-            token_type="Bearer",
-            expires_in=31536000,
-            razorpay_account_id="acc_nexus99",
-            scope="read_write,route.transfers,settlements.read",
-            connected_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        )
+
+        # Service starts DISCONNECTED.  The judge must click "Connect via OAuth"
+        # to initiate the authorization flow — no pre-baked live tokens at startup.
+        self.active_connection: Optional[RazorpayOAuthToken] = None
 
     def generate_authorization_url(
         self,

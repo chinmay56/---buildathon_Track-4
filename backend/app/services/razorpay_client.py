@@ -3,8 +3,17 @@ Official Razorpay Services Integration Client.
 
 Wraps Razorpay Route, Transfers, Reversals, Settlements Recon, and Webhook
 Signature Verification using standard Razorpay API schemas and the official razorpay SDK.
+
+Credentials are read exclusively from environment variables:
+  RAZORPAY_KEY_ID     — Razorpay API key (e.g. rzp_test_xxx or rzp_live_xxx)
+  RAZORPAY_KEY_SECRET — Razorpay API secret
+
+If the variables are absent the client falls back to sandbox demo values so
+judges can run without configuring real credentials. Demo responses are
+simulated locally (no live API call is made).
 """
 
+import os
 import hmac
 import hashlib
 import time
@@ -16,6 +25,10 @@ try:
     RAZORPAY_SDK_AVAILABLE = True
 except ImportError:
     RAZORPAY_SDK_AVAILABLE = False
+
+# Read credentials from env; fall back to clearly-labelled demo values.
+_DEFAULT_KEY_ID     = "rzp_test_DEMO_KEY_ID"
+_DEFAULT_KEY_SECRET = "rzp_test_DEMO_KEY_SECRET"
 
 
 class RazorpayRouteTransferRequest(BaseModel):
@@ -34,11 +47,16 @@ class RazorpayRouteReversalRequest(BaseModel):
 
 
 class RazorpayServiceClient:
-    def __init__(self, key_id: str = "rzp_test_nexus99", key_secret: str = "secret_nexus99_live"):
-        self.key_id = key_id
-        self.key_secret = key_secret
+    def __init__(
+        self,
+        key_id: str = "",
+        key_secret: str = "",
+    ):
+        # Prefer constructor args; fall back to env vars; then to demo placeholders.
+        self.key_id     = key_id     or os.getenv("RAZORPAY_KEY_ID",     _DEFAULT_KEY_ID)
+        self.key_secret = key_secret or os.getenv("RAZORPAY_KEY_SECRET", _DEFAULT_KEY_SECRET)
         if RAZORPAY_SDK_AVAILABLE:
-            self.client = razorpay.Client(auth=(key_id, key_secret))
+            self.client = razorpay.Client(auth=(self.key_id, self.key_secret))
         else:
             self.client = None
 

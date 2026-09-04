@@ -5,8 +5,7 @@ import {
   Wallet, 
   Flame, 
   Bot, 
-  TrendingUp,
-  Activity
+  TrendingUp
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -179,40 +178,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       borderRight: '1px solid var(--blade-border-medium)',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'space-between',
       height: 'calc(100vh - 56px)',
       position: 'sticky',
       top: '56px',
       zIndex: 30,
     }}>
-      
-      {/* Navigation Groups with Minimal Dissection */}
       <div style={{ padding: '16px 8px' }}>
         {renderNavSection('Core Operations', coreOps)}
         {renderNavSection('Intelligence & Float', intelligenceNav, true)}
       </div>
-
-      {/* Clean Minimalist Footer Status */}
-      <div style={{
-        padding: '14px 16px',
-        borderTop: '1px solid #F1F5F9',
-        background: '#FAFAFA',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669' }}></span>
-          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#334155', fontFamily: 'var(--font-heading)' }}>
-            Engine Active
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.66rem', color: '#94A3B8', fontFamily: 'var(--font-mono)' }}>
-          <Activity size={12} color="#059669" />
-          <span>14ms</span>
-        </div>
-      </div>
-
     </aside>
   );
 };

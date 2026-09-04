@@ -251,39 +251,7 @@ export const App: React.FC = () => {
 
           {/* Tab 4: Cash Position */}
           {activeTab === 'cash' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <CashPositionCard cash={cashPosition} />
-              
-              <div className="blade-panel" style={{ padding: '20px' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--blade-text-primary)', marginBottom: '10px' }}>
-                  Settlement Risk & Trapped Float Analysis
-                </h3>
-                <p style={{ fontSize: '0.78rem', color: 'var(--blade-text-muted)', lineHeight: 1.5, marginBottom: '14px' }}>
-                  In marketplace operations, funds released to vendors prior to customer returns represent unrecovered debit balances. The Settlement Controller ensures unrecovered clawbacks are tagged against next rolling settlement cycles, protecting your net working capital float.
-                </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div style={{ padding: '14px', background: 'var(--blade-bg-subtle)', borderRadius: '6px', border: '1px solid var(--blade-border-subtle)' }}>
-                    <div style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--blade-text-primary)', marginBottom: '4px' }}>
-                      Automated Vendor Clawback Buffer
-                    </div>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--blade-text-muted)' }}>
-                      Debit adjustments are automatically scheduled against future vendor split payouts.
-                    </p>
-                  </div>
-
-                  <div style={{ padding: '14px', background: 'var(--blade-bg-subtle)', borderRadius: '6px', border: '1px solid var(--blade-border-subtle)' }}>
-                    <div style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--blade-text-primary)', marginBottom: '4px' }}>
-                      Orphaned Payout Freeze Policy
-                    </div>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--blade-text-muted)' }}>
-                      Bank UTR transfers without captured payment events are frozen pending reconciliation audit.
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            <CashPositionCard cash={cashPosition} />
           )}
 
           {/* Tab 5: Forward 7-Day Forecast */}

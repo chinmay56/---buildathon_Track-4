@@ -9,22 +9,32 @@ import type {
   CopilotQueryResponse 
 } from './types';
 
-const API_BASE = "http://127.0.0.1:8000/api";
+// Read the backend base URL from the Vite environment.
+// Set VITE_API_BASE_URL in frontend/.env (e.g. http://127.0.0.1:8000/api).
+// Falls back to localhost for local development if the variable is not set.
+const API_BASE: string =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
+  "http://127.0.0.1:8000/api";
 
-let currentToken: string = "token_lead_controller";
+// Token is populated after login — no default that reveals the auth scheme.
+let currentToken: string = "";
 let currentRole: string = "FINANCE_CONTROLLER";
 
-export function setAuthRole(role: string, token: string = "token_lead_controller") {
+export function setAuthRole(role: string, token: string = "") {
   currentRole = role;
   currentToken = token;
 }
 
 function getHeaders(): HeadersInit {
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${currentToken}`,
-    'X-User-Role': currentRole
+    'X-User-Role': currentRole,
   };
+  // Only attach Authorization header when we actually have a token.
+  if (currentToken) {
+    headers['Authorization'] = `Bearer ${currentToken}`;
+  }
+  return headers;
 }
 
 export async function fetchCurrentUser(): Promise<AuthUser> {
@@ -129,7 +139,7 @@ export async function runAIInvestigation(exceptionId: string): Promise<{ status:
   return res.json();
 }
 
-export async function approveCorrection(exceptionId: string, reviewerId: string = "Arjun Mehta (Lead Controller)"): Promise<{ status: string; exception: SettlementException; message?: string }> {
+export async function approveCorrection(exceptionId: string, reviewerId?: string): Promise<{ status: string; exception: SettlementException; message?: string }> {
   const res = await fetch(`${API_BASE}/exceptions/${exceptionId}/approve`, {
     method: 'POST',
     headers: getHeaders(),
@@ -174,14 +184,20 @@ export async function injectChaosScenario(scenario: string, amount: number, vend
   return res.json();
 }
 
-export async function queryCopilot(message: string, orderId?: string, vendorId?: string): Promise<CopilotQueryResponse> {
+export async function queryCopilot(
+  message: string,
+  orderId?: string,
+  vendorId?: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+): Promise<CopilotQueryResponse> {
   const res = await fetch(`${API_BASE}/copilot/query`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({
       message,
       order_id: orderId,
-      vendor_id: vendorId
+      vendor_id: vendorId,
+      history
     })
   });
   if (!res.ok) throw new Error("Failed to query settlement copilot");

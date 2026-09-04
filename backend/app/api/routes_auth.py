@@ -9,7 +9,8 @@ from backend.app.core.auth import (
     AuthUser,
     UserRole,
     PRECONFIGURED_USERS,
-    get_current_user
+    get_current_user,
+    get_demo_tokens,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication & RBAC"])
@@ -29,23 +30,26 @@ class LoginResponse(BaseModel):
 @router.post("/login", response_model=LoginResponse)
 async def login(req: LoginRequest):
     """
-    Authenticates user and returns scoped Bearer Token with role permissions.
+    Authenticates a demo user by email and returns a scoped Bearer token.
+    Unknown emails receive HTTP 401 — no silent admin promotion.
     """
+    demo_tokens = get_demo_tokens()
+
     for user_key, user_obj in PRECONFIGURED_USERS.items():
         if user_obj.email.lower() == req.email.lower() or user_key in req.email.lower():
-            token = f"token_{user_key}"
+            token = demo_tokens[user_key]
             return LoginResponse(
                 access_token=token,
                 token_type="bearer",
-                user=user_obj
+                user=user_obj,
             )
-            
-    # Default fallback
-    lead = PRECONFIGURED_USERS["lead_controller"]
-    return LoginResponse(
-        access_token="token_lead_controller",
-        token_type="bearer",
-        user=lead
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=(
+            "No demo account found for that email. "
+            "Use /api/auth/demo-accounts to list available accounts."
+        ),
     )
 
 

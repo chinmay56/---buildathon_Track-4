@@ -103,15 +103,23 @@ export interface ForwardCashForecastReport {
 }
 
 export interface BenchmarkReport {
+  timestamp: string;
   dataset_version: string;
   metrics: {
     total_records: number;
-    ground_truth_exceptions: number;
-    detected_exceptions: number;
+    matched_records: number;
+    exception_records: number;
+    resolved_records: number;
+    human_review_records: number;
+    unresolved_records: number;
+    match_rate_pct: number;
     precision_pct: number;
     recall_pct: number;
     f1_score_pct: number;
     monetary_accuracy_pct: number;
+    total_financial_exposure: number;
+    total_recovered_exposure: number;
+    processing_time_ms: number;
     throughput_records_per_sec: number;
   };
   confusion_matrix: {
@@ -128,6 +136,7 @@ export interface BenchmarkReport {
     recall_pct: number;
     monetary_error_delta: number;
   }>;
+  honest_exception_breakdown: Record<string, number>;
 }
 
 export interface CopilotQueryResponse {

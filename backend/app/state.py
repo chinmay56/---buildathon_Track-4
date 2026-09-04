@@ -37,7 +37,9 @@ class AppState:
         self.investigator: Optional[AIInvestigator] = None
         self.evaluator: Optional[GroundTruthEvaluator] = None
 
-        # Auto-initialize 75-record batch immediately on startup
+        # Seed the initial 75-record batch once at module load.
+        # The lifespan handler in main.py only calls init_db() — it does NOT call
+        # initialize_and_run() again, so this is the single initialization point.
         self.initialize_and_run(count=75)
 
     def persist_to_db(self, data: Dict[str, Any]):
@@ -107,7 +109,13 @@ class AppState:
             db.commit()
             db.close()
         except Exception as e:
-            print(f"[DB] Persistence note: {e}")
+            # Log clearly so the developer knows persistence failed.
+            # In demo mode (SQLite) this should never happen; in production
+            # you should propagate the error rather than swallowing it.
+            import traceback
+            print(f"[DB ERROR] Persistence failed — data is in-memory only for this run.")
+            print(traceback.format_exc())
+            raise RuntimeError(f"DB persistence failed: {e}") from e
 
     def initialize_and_run(self, count: int = 75):
         data, gt = self.generator.generate_batch(count=count)
@@ -168,20 +176,32 @@ class AppState:
     def get_cash_position(self) -> CashPosition:
         if not self.last_run_result:
             self.initialize_and_run(75)
-            
+
         total_gmv = sum(o.amount for o in self.orders.values())
+
+        # Derive trapped capital directly from unresolved exceptions —
+        # the exception discrepancy_amount is the authoritative figure calculated
+        # by the deterministic engine, not the raw refund/payout field.
+        from backend.app.models.exception import ExceptionType, ExceptionStatus
+
         unrecovered_clawbacks = sum(
-            r.amount for r_list in self.refunds.values() for r in r_list 
-            if r.clawback_status.value == "UNRECOVERED"
+            e.discrepancy_amount
+            for e in self.exceptions.values()
+            if e.exception_type == ExceptionType.REFUND_AFTER_PAYOUT_UNRECOVERED
+            and e.status not in (ExceptionStatus.VERIFIED_RESOLVED,)
         )
+
         orphaned_exposure = sum(
-            p.amount for p_list in self.payouts.values() for p in p_list 
-            if p.order_id not in self.payments
+            e.discrepancy_amount
+            for e in self.exceptions.values()
+            if e.exception_type == ExceptionType.ORPHANED_PAYOUT_RECORD
+            and e.status not in (ExceptionStatus.VERIFIED_RESOLVED,)
         )
-        # Safe float represents total GMV minus uncollected liabilities and unrecovered exposure
+
+        # Safe float = 88% of GMV minus liabilities not yet recovered
         safe_float = max(0.0, total_gmv * 0.88 - unrecovered_clawbacks - orphaned_exposure)
         risk_pct = round((unrecovered_clawbacks + orphaned_exposure) / max(total_gmv, 1.0) * 100, 2)
-        
+
         return CashPosition(
             total_gmv_inr=round(total_gmv, 2),
             unrecovered_vendor_clawbacks_inr=round(unrecovered_clawbacks, 2),

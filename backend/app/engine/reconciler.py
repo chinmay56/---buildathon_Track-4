@@ -71,9 +71,12 @@ class MultiSourceReconciler:
         splits: Union[List[Split], Dict[str, List[Split]]],
         payouts: Union[List[Payout], Dict[str, List[Payout]]],
         refunds: Union[List[Refund], Dict[str, List[Refund]]],
-        batch_id: str = "BATCH_20260828_01"
+        batch_id: str = ""
     ) -> BatchReconciliationResult:
         start_time = time.perf_counter()
+
+        # Generate a unique batch ID for every run so audit trails are distinguishable.
+        effective_batch_id = batch_id or f"BATCH_{datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')}"
 
         orders_list = list(orders.values()) if isinstance(orders, dict) else orders
         
@@ -130,7 +133,7 @@ class MultiSourceReconciler:
 
             if order_exception:
                 exceptions.append(order_exception)
-                expected_settlement = order_exception.financial_breakdown.expected_amount if order_exception.financial_breakdown else order.amount * 0.88
+                expected_settlement = order_exception.financial_breakdown.expected_amount if order_exception.financial_breakdown else order.amount * (1 - self.policy.platform_commission_pct / 100.0)
                 actual_settlement = order_exception.financial_breakdown.actual_amount if order_exception.financial_breakdown else (order_payouts[0].amount if order_payouts else 0.0)
                 discrepancy = order_exception.discrepancy_amount
 
@@ -141,9 +144,9 @@ class MultiSourceReconciler:
                     gross_amount=order.amount,
                     expected_settlement=round(expected_settlement, 2),
                     actual_settlement=round(actual_settlement, 2),
-                    commission_deducted=round(order.amount * 0.10, 2),
-                    tax_deducted=round(order.amount * 0.018, 2),
-                    gateway_fee_deducted=round(order.amount * 0.02, 2),
+                    commission_deducted=round(order.amount * (self.policy.platform_commission_pct / 100.0), 2),
+                    tax_deducted=round(order.amount * (self.policy.payment_gateway_fee_pct / 100.0) * (self.policy.payment_gateway_fee_tax_pct / 100.0), 2),
+                    gateway_fee_deducted=round(order.amount * (self.policy.payment_gateway_fee_pct / 100.0), 2),
                     net_discrepancy=round(discrepancy, 2),
                     status=order_exception.status.value,
                     exception_id=order_exception.id
@@ -151,7 +154,7 @@ class MultiSourceReconciler:
                 settlement_records.append(rec)
             else:
                 matched_count += 1
-                actual_amt = order_payouts[0].amount if order_payouts else (order.amount * 0.88)
+                actual_amt = order_payouts[0].amount if order_payouts else round(order.amount * (1 - self.policy.platform_commission_pct / 100.0), 2)
                 rec = SettlementRecord(
                     id=f"SETL_{order.id}",
                     order_id=order.id,
@@ -159,9 +162,9 @@ class MultiSourceReconciler:
                     gross_amount=order.amount,
                     expected_settlement=round(actual_amt, 2),
                     actual_settlement=round(actual_amt, 2),
-                    commission_deducted=round(order.amount * 0.10, 2),
-                    tax_deducted=round(order.amount * 0.018, 2),
-                    gateway_fee_deducted=round(order.amount * 0.02, 2),
+                    commission_deducted=round(order.amount * (self.policy.platform_commission_pct / 100.0), 2),
+                    tax_deducted=round(order.amount * (self.policy.payment_gateway_fee_pct / 100.0) * (self.policy.payment_gateway_fee_tax_pct / 100.0), 2),
+                    gateway_fee_deducted=round(order.amount * (self.policy.payment_gateway_fee_pct / 100.0), 2),
                     net_discrepancy=0.0,
                     status="MATCHED",
                     exception_id=None
@@ -174,7 +177,7 @@ class MultiSourceReconciler:
         match_rate = round((matched_count / max(total_records, 1)) * 100, 2)
 
         return BatchReconciliationResult(
-            batch_id=batch_id,
+            batch_id=effective_batch_id,
             total_records=total_records,
             matched_records=matched_count,
             exception_count=len(exceptions),

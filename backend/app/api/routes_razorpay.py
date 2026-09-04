@@ -25,17 +25,21 @@ class WebhookEventPayload(BaseModel):
     account_id: str = "acc_nexus99"
 
 
+class RouteTransferRequest(BaseModel):
+    payment_id: str
+    transfers: List[RazorpayRouteTransferRequest]
+
+
 @router.post("/route/transfers")
 def create_route_split_transfer(
-    payment_id: str,
-    transfers: List[RazorpayRouteTransferRequest],
+    req: RouteTransferRequest,
     user: AuthUser = Depends(require_permission("run_reconciliation"))
 ):
     """
     POST /v1/payments/{payment_id}/transfers
     Executes Razorpay Route split transfer to vendor linked accounts.
     """
-    return razorpay_client.create_route_transfer(payment_id, transfers)
+    return razorpay_client.create_route_transfer(req.payment_id, req.transfers)
 
 
 @router.post("/route/reversals")
