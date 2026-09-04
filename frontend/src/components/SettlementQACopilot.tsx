@@ -153,11 +153,12 @@ interface MessageItem {
 
 interface CopilotProps {
   onInspectOrder?: (orderId: string) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const SettlementQACopilot: React.FC<CopilotProps> = ({ onInspectOrder }) => {
+export const SettlementQACopilot: React.FC<CopilotProps> = ({ onInspectOrder: _onInspectOrder }) => {
   const [messages, setMessages] = useState<MessageItem[]>([
     {
       id: 'welcome_1',
@@ -321,19 +322,15 @@ export const SettlementQACopilot: React.FC<CopilotProps> = ({ onInspectOrder }) 
                   </div>
                 )}
 
-                {/* Suggested Actions */}
+                {/* Suggested Actions — clicking sends the action as a follow-up query */}
                 {msg.data?.suggested_actions && msg.data.suggested_actions.length > 0 && (
                   <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {msg.data.suggested_actions.map((act, idx) => (
                       <button
                         key={idx}
                         className="btn-secondary"
-                        style={{ padding: '3px 8px', fontSize: '0.68rem', background: '#FFFFFF' }}
-                        onClick={() => {
-                          if (msg.data?.context_data?.order_id && onInspectOrder) {
-                            onInspectOrder(msg.data.context_data.order_id);
-                          }
-                        }}
+                        style={{ padding: '3px 8px', fontSize: '0.68rem', background: '#FFFFFF', cursor: 'pointer' }}
+                        onClick={() => handleSend(act)}
                       >
                         <span>{act}</span>
                         <ArrowRight size={10} />
