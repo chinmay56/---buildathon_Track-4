@@ -43,6 +43,7 @@ yarn-error.log*
 dist/
 dist-ssr/
 *.local
+package-lock.json
 
 # Local databases & logs
 *.db
