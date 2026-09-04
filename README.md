@@ -266,15 +266,6 @@ backend/tests/test_verification_loop.py::test_full_reconciliation_investigation_
 ======================== 18 passed in 0.88s ==============================
 ```
 
-| Metric | Target | Measured | Status |
-|---|---|---|---|
-| Reconciliation Precision | ≥ 95.0% | **100.0%** | 🟢 PASSED |
-| Reconciliation Recall | ≥ 95.0% | **100.0%** | 🟢 PASSED |
-| F1 Score | ≥ 0.95 | **1.000** | 🟢 PASSED |
-| Monetary Accuracy | 100.0% | **100.0%** | 🟢 PASSED |
-| Processing Throughput | ≥ 1,000 rec/s | **48,000+ rec/sec** | 🟢 PASSED |
-| Post-Correction Delta | ₹0.00 | **₹0.00** | 🟢 PASSED |
-
 ---
 
 ## 📡 API Specification & Swagger Endpoints
